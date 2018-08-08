@@ -1,5 +1,6 @@
 package edu.teco.dustradar;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -15,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -110,9 +112,26 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+
+            View rootView = null;
+
+            switch (getArguments().getInt(ARG_SECTION_NUMBER)) {
+                case 1:
+                    rootView = inflater.inflate(R.layout.fragment_videotitle, container, false);
+                    VideoView videoView = rootView.findViewById(R.id.videoViewTitle);
+                    Uri testuri = Uri.parse("android.resource://" + getActivity().getPackageName() + "/" + R.raw.whitesmoke);
+                    videoView.setVideoURI(Uri.parse("android.resource://" + getActivity().getPackageName() + "/" + R.raw.whitesmoke));
+                    videoView.start();
+                    videoView.requestFocus();
+                    break;
+                default:
+                    rootView = inflater.inflate(R.layout.fragment_main, container, false);
+                    TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+                    textView.setText(getString(R.string.section_format,
+                            getArguments().getInt(ARG_SECTION_NUMBER)));
+            }
+
+
             return rootView;
         }
     }
