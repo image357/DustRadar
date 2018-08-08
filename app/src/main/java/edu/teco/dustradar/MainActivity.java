@@ -1,5 +1,6 @@
 package edu.teco.dustradar;
 
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -19,6 +20,8 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -95,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         private static final String ARG_SECTION_NUMBER = "section_number";
 
         public PlaceholderFragment() {
+            return;
         }
 
         /**
@@ -114,21 +118,29 @@ public class MainActivity extends AppCompatActivity {
                                  Bundle savedInstanceState) {
 
             View rootView = null;
+            int section = getArguments().getInt(ARG_SECTION_NUMBER);
 
-            switch (getArguments().getInt(ARG_SECTION_NUMBER)) {
-                case 1:
+            switch (section) {
+                case 0:
                     rootView = inflater.inflate(R.layout.fragment_videotitle, container, false);
                     VideoView videoView = rootView.findViewById(R.id.videoViewTitle);
-                    Uri testuri = Uri.parse("android.resource://" + getActivity().getPackageName() + "/" + R.raw.whitesmoke);
-                    videoView.setVideoURI(Uri.parse("android.resource://" + getActivity().getPackageName() + "/" + R.raw.whitesmoke));
+                    Uri videoUri = Uri.parse("android.resource://" + getActivity().getPackageName() + "/" + R.raw.whitesmoke);
+                    videoView.setVideoURI(videoUri);
+
+                    videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mp) {
+                            mp.setLooping(true);
+                        }
+                    });
+
                     videoView.start();
                     videoView.requestFocus();
                     break;
                 default:
                     rootView = inflater.inflate(R.layout.fragment_main, container, false);
                     TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-                    textView.setText(getString(R.string.section_format,
-                            getArguments().getInt(ARG_SECTION_NUMBER)));
+                    textView.setText(getString(R.string.section_format, section));
             }
 
 
@@ -150,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            return PlaceholderFragment.newInstance(position);
         }
 
         @Override
