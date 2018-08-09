@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -52,16 +53,6 @@ public class MainActivity extends AppCompatActivity {
         // Set up the ViewPager with the sections adapter.
         mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
     }
 
 
@@ -121,8 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
             switch (section) {
                 case 0:
-                    rootView = inflater.inflate(R.layout.fragment_videotitle, container,
-                            false);
+                    rootView = inflater.inflate(R.layout.fragment_videotitle, container, false);
 
                     VideoView videoView = rootView.findViewById(R.id.videoViewTitle);
                     Uri videoUri = Uri.parse("android.resource://" + getActivity().getPackageName()
@@ -139,12 +129,18 @@ public class MainActivity extends AppCompatActivity {
                     videoView.start();
                     videoView.requestFocus();
                     break;
-                default:
-                    rootView = inflater.inflate(R.layout.fragment_main, container, false);
-                    TextView textView = rootView.findViewById(R.id.section_label);
-                    textView.setText(getString(R.string.section_format, section));
-            }
 
+                case 1:
+                    rootView = inflater.inflate(R.layout.fragment_blebridge, container, false);
+                    break;
+
+                case 2:
+                    rootView = inflater.inflate(R.layout.fragment_display, container, false);
+                    break;
+
+                default:
+                    throw new RuntimeException("illegal section number: " + String.valueOf(section));
+            }
 
             return rootView;
         }
@@ -169,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
+            // Define number of sections.
             return 3;
         }
     }
