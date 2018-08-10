@@ -3,7 +3,6 @@ package edu.teco.dustradar;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -24,20 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
-    private SectionsPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    private ViewPager mViewPager;
+    private ViewPager mViewPager = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,13 +32,11 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
-        // Set up the ViewPager with the sections adapter.
+        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.getCurrentItem();
     }
 
 
@@ -70,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -78,14 +61,34 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
+    public void OnStartButtonClick(View view) {
+        int section = mViewPager.getCurrentItem();
+        Log.d(TAG, "Start button click in section: " + String.valueOf(section));
+
+        switch (section) {
+            case 1:
+                // BLE Bridge
+                Snackbar.make(view, "comming soon ...", Snackbar.LENGTH_LONG).setAction(
+                        "Action", null).show();
+                break;
+
+            case 2:
+                // Local Display
+                Snackbar.make(view, "comming soon ...", Snackbar.LENGTH_LONG).setAction(
+                        "Action", null).show();
+                break;
+
+            default:
+                Snackbar.make(view, "not supported", Snackbar.LENGTH_LONG).setAction(
+                        "Action", null).show();
+        }
+    }
+
+
+    // A placeholder fragment containing a simple view.
+
     public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
+
         private static final String ARG_SECTION_NUMBER = "section_number";
 
         public PlaceholderFragment() {
@@ -110,36 +113,50 @@ public class MainActivity extends AppCompatActivity {
             View rootView;
             int section = getArguments().getInt(ARG_SECTION_NUMBER);
 
+            if (section == 0) {
+                rootView = inflater.inflate(R.layout.fragment_videotitle, container, false);
+
+                VideoView videoView = rootView.findViewById(R.id.videoViewTitle);
+                Uri videoUri = Uri.parse("android.resource://" + getActivity().getPackageName()
+                        + "/" + R.raw.whitesmoke);
+                videoView.setVideoURI(videoUri);
+
+                videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        mp.setLooping(true);
+                    }
+                });
+
+                videoView.start();
+                videoView.requestFocus();
+            }
+            else {
+                rootView = inflater.inflate(R.layout.fragment_mode, container, false);
+            }
+
+            // adjust TextViews
+            TextView title = rootView.findViewById(R.id.textView_mode_title);
+            TextView description = rootView.findViewById(R.id.textView_mode_description);
             switch (section) {
                 case 0:
-                    rootView = inflater.inflate(R.layout.fragment_videotitle, container, false);
-
-                    VideoView videoView = rootView.findViewById(R.id.videoViewTitle);
-                    Uri videoUri = Uri.parse("android.resource://" + getActivity().getPackageName()
-                            + "/" + R.raw.whitesmoke);
-                    videoView.setVideoURI(videoUri);
-
-                    videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                        @Override
-                        public void onPrepared(MediaPlayer mp) {
-                            mp.setLooping(true);
-                        }
-                    });
-
-                    videoView.start();
-                    videoView.requestFocus();
+                    // no text for video title
                     break;
 
                 case 1:
-                    rootView = inflater.inflate(R.layout.fragment_blebridge, container, false);
+                    title.setText(R.string.mode_blebride_title);
+                    description.setText(R.string.mode_blebride_description);
                     break;
 
                 case 2:
-                    rootView = inflater.inflate(R.layout.fragment_display, container, false);
+                    title.setText(R.string.mode_localdisplay_title);
+                    description.setText(R.string.mode_localdisplay_description);
                     break;
 
                 default:
-                    throw new RuntimeException("illegal section number: " + String.valueOf(section));
+                    title.setText(R.string.mode_emptytitle);
+                    description.setText(R.string.mode_emptydescription);
+                    Log.w(TAG, "Trying to access more fragments than possible.");
             }
 
             return rootView;

@@ -4,4 +4,10 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="appbar_padding_top">8dp</dimen>
+
+    <dimen name="videotitle_fontsize">16sp</dimen>
+
+    <dimen name="mode_text_padding">20dp</dimen>
+    <dimen name="mode_fontsize_title">40sp</dimen>
+    <dimen name="mode_fontsize_description">20sp</dimen>
 </resources>

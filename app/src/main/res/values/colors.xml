@@ -5,9 +5,11 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     -->
-    <color name="colorPrimary">#00D225</color>
+    <color name="colorPrimary">#11CC25</color>
     <color name="colorPrimaryDark">#00AA25</color>
     <color name="colorAccent">#0DACF9</color>
+
     <color name="black">#000000</color>
-    <color name="textGreen">#00D225</color>
+
+    <color name="videotitle_textcolor">#00D225</color>
 </resources>
