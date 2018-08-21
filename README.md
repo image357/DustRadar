@@ -1,2 +1,2 @@
 # DustRadar
-Android App for DustSensor Devices
+Android App for DustTracker Devices
