@@ -1,5 +1,6 @@
 package edu.teco.dustradar;
 
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,9 +20,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import edu.teco.dustradar.BLEBridge.BLEBridge;
+
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = MainActivity.class.getName();
 
     private ViewPager mViewPager = null;
 
@@ -68,8 +71,14 @@ public class MainActivity extends AppCompatActivity {
         switch (section) {
             case 1:
                 // BLE Bridge
-                Snackbar.make(view, "comming soon ...", Snackbar.LENGTH_LONG).setAction(
-                        "Action", null).show();
+                if (BuildConfig.DEBUG) {
+                    Intent intent = new Intent(this, BLEBridge.class);
+                    startActivity(intent);
+                }
+                else {
+                    Snackbar.make(view, "comming soon ...", Snackbar.LENGTH_LONG).setAction(
+                            "Action", null).show();
+                }
                 break;
 
             case 2:
