@@ -1,23 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<edu.teco.dustradar.layout.CheckableLinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/list_item_bledevices_root">
+    android:minHeight="?android:attr/listPreferredItemHeight"
+    android:id="@+id/list_item_bledevices_root"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp"
+    android:gravity="center_vertical"
+    android:background="@drawable/list_item_background">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?android:attr/listPreferredItemHeight"
+        android:textStyle="bold"
+        android:textColor="@color/black"
         android:gravity="center_vertical"
         android:id="@+id/list_item_bledevices_devicename" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?android:attr/listPreferredItemHeight"
+        android:textStyle="bold"
+        android:textColor="@color/black"
         android:gravity="center_vertical"
         android:id="@+id/list_item_bledevices_deviceaddress" />
 
-</LinearLayout>
+</edu.teco.dustradar.layout.CheckableLinearLayout>

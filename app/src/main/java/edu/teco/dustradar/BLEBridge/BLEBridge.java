@@ -1,7 +1,9 @@
 package edu.teco.dustradar.BLEBridge;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,11 +18,17 @@ public class BLEBridge extends AppCompatActivity {
 
     private static final String TAG = BLEBridge.class.getName();
 
+    private BLEConnection bleConnection;
+
     private Long lastTimestamp;
 
-    private BLEConnection bleConnection;
-    private final int BLE_ENABLE_REQUEST_CODE = 1;
 
+    // request codes
+    private final int BLE_ENABLE_REQUEST_CODE = 1;
+    private final int COARSE_LOCATION_PERMISSION_REQUEST_CODE = 2;
+
+
+    // event handlers
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,27 +57,35 @@ public class BLEBridge extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        if (! bleConnection.hasBluetooth()) {
-            Toast.makeText(this, "BLE is not supported on your device.",
-                    Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
-
-        bleConnection.enable(this, BLE_ENABLE_REQUEST_CODE);
-
         lastTimestamp = System.currentTimeMillis();
+        makePermissionChecks();
     }
 
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == BLE_ENABLE_REQUEST_CODE) {
-            if (resultCode != RESULT_OK) {
-                Toast.makeText(this, "You have to enable BLE to use this mode.",
-                        Toast.LENGTH_LONG).show();
-                finish();
-            }
+        switch (requestCode) {
+            case BLE_ENABLE_REQUEST_CODE:
+                if (resultCode != RESULT_OK) {
+                    Toast.makeText(this, "You have to enable BLE to use this mode.",
+                            Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                break;
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case COARSE_LOCATION_PERMISSION_REQUEST_CODE:
+                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "You have to allow location access to use this mode.",
+                            Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                break;
         }
     }
 
@@ -111,6 +127,21 @@ public class BLEBridge extends AppCompatActivity {
                 Snackbar.LENGTH_LONG).setAction("Action", null).show();
 
         lastTimestamp = currentTimestamp;
+    }
+
+
+    // private methods
+
+    private void makePermissionChecks() {
+        if (! bleConnection.hasBluetooth()) {
+            Toast.makeText(this, "BLE is not supported on your device.",
+                    Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        bleConnection.enable(this, BLE_ENABLE_REQUEST_CODE);
+        bleConnection.requestLocationPermission(this, COARSE_LOCATION_PERMISSION_REQUEST_CODE);
     }
 
 }

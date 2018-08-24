@@ -6,12 +6,18 @@
 
     <string name="mode_emptytitle"><b>none</b></string>
     <string name="mode_emptydescription">none</string>
-    <string name="button_mode">Start</string>
+    <string name="button_mode_start">Start</string>
+    <string name="button_mode_starting">Starting ...</string>
     <string name="mode_blebride_title"><b>BLE Bridge</b></string>
-    <string name="mode_blebride_description">The Bluetooth Low Energy (BLE) Bridge enables you to connect your Smartphone to a single DustTracker in order to show its sensor readings. Furthermore, you can use your internet connection to upload the measurements to the OpenData infrastructure.</string>
+    <string name="mode_blebride_description">The Bluetooth Low Energy (BLE) Bridge enables you to connect your Smartphone to a single DustTracker device in order to show its sensor readings. Furthermore, you can use your internet connection to upload the measurements to the OpenData infrastructure.</string>
     <string name="mode_localdisplay_title"><b>Local Display</b></string>
     <string name="mode_localdisplay_description">With Local Display you have the ability to display current and historical sensor readings of DustTracker devices within you local vicinity. Additionally, some metrics for this data are shown.</string>
 
     <string name="title_activity_blebridge">BLE Bridge</string>
-    <string name="unknown_device">UNKNOWN</string>
+    <string name="blebridge_devicename">Device:&#160;</string>
+    <string name="blebridge_deviceaddress">Address:&#160;</string>
+    <string name="blebridge_unknown_device">UNKNOWN</string>
+    <string name="blebridge_switch_scan">Scanning</string>
+    <string name="blebridge_button_connect">Connect</string>
+    <string name="blebridge_button_connecting">Connecting</string>
 </resources>

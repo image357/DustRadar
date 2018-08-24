@@ -17,6 +17,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.VideoView;
 
@@ -27,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
 
     private ViewPager mViewPager = null;
+
+
+    // event handlers
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -64,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
     public void OnStartButtonClick(View view) {
         int section = mViewPager.getCurrentItem();
         Log.d(TAG, "Start button click in section: " + String.valueOf(section));
@@ -71,14 +77,10 @@ public class MainActivity extends AppCompatActivity {
         switch (section) {
             case 1:
                 // BLE Bridge
-                if (BuildConfig.DEBUG) {
-                    Intent intent = new Intent(this, BLEBridge.class);
-                    startActivity(intent);
-                }
-                else {
-                    Snackbar.make(view, "comming soon ...", Snackbar.LENGTH_LONG).setAction(
-                            "Action", null).show();
-                }
+                Button button = findViewById(R.id.button_mode);
+                button.setText(R.string.button_mode_starting);
+                Intent intent = new Intent(this, BLEBridge.class);
+                startActivity(intent);
                 break;
 
             case 2:
@@ -100,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
 
         private static final String ARG_SECTION_NUMBER = "section_number";
 
+        private Button startButton = null;
+
         public PlaceholderFragment() {
         }
 
@@ -114,6 +118,8 @@ public class MainActivity extends AppCompatActivity {
             fragment.setArguments(args);
             return fragment;
         }
+
+        // event handlers
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -142,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
             }
             else {
                 rootView = inflater.inflate(R.layout.fragment_mode, container, false);
+                startButton = rootView.findViewById(R.id.button_mode);
             }
 
             // adjust TextViews
@@ -170,6 +177,15 @@ public class MainActivity extends AppCompatActivity {
 
             return rootView;
         }
+
+        @Override
+        public void onResume() {
+            if (startButton != null) {
+                startButton.setText(R.string.button_mode_start);
+            }
+
+            super.onResume();
+        }
     }
 
     /**
@@ -177,6 +193,8 @@ public class MainActivity extends AppCompatActivity {
      * one of the sections/tabs/pages.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        private int numberOfSections = 3;
 
         SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -192,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public int getCount() {
             // Define number of sections.
-            return 3;
+            return numberOfSections;
         }
     }
 }
