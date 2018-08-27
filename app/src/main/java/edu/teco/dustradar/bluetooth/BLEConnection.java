@@ -10,8 +10,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
+
+import edu.teco.dustradar.R;
 
 public class BLEConnection {
 
@@ -71,14 +74,24 @@ public class BLEConnection {
     @SuppressWarnings("deprecation")
     public void startScan() {
         scanning = true;
-        getBluetoothAdapter().startLeScan(mBLEScanCallback);
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                getBluetoothAdapter().startLeScan(mBLEScanCallback);
+            }
+        });
     }
 
 
     @SuppressWarnings("deprecation")
     public void stopScan() {
         scanning = false;
-        getBluetoothAdapter().stopLeScan(mBLEScanCallback);
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                getBluetoothAdapter().stopLeScan(mBLEScanCallback);
+            }
+        });
     }
 
 
@@ -134,7 +147,7 @@ public class BLEConnection {
             return true;
         }
 
-        return (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION)
+        return (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED);
     }
 
@@ -149,7 +162,7 @@ public class BLEConnection {
             return;
         }
 
-        activity.requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, requestCode);
+        activity.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, requestCode);
     }
 
 }

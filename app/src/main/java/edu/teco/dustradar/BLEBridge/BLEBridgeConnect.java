@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListView;
@@ -56,6 +57,7 @@ public class BLEBridgeConnect extends Fragment {
                 R.id.list_item_bledevices_deviceaddress
         );
         listBLE.setAdapter(bleDeviceListAdapter);
+        listBLE.setOnItemClickListener(onListClick);
 
         bleConnection = new BLEConnection(getActivity(), bleDeviceListAdapter);
 
@@ -93,7 +95,7 @@ public class BLEBridgeConnect extends Fragment {
 
 
             if (postion < 0 || postion >= bleDeviceListAdapter.getCount()) {
-                Snackbar.make(v, "First select a DustTracker device.", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(v, "Select a DustTracker device first.", Snackbar.LENGTH_SHORT).show();
                 return;
             }
 
@@ -117,6 +119,15 @@ public class BLEBridgeConnect extends Fragment {
             else {
                 bleConnection.stopScan();
             }
+        }
+    });
+
+
+    private AdapterView.OnItemClickListener onListClick = (new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            scanningSwitch.setChecked(false);
+            bleConnection.stopScan();
         }
     });
 

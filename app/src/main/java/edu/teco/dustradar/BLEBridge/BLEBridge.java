@@ -25,7 +25,7 @@ public class BLEBridge extends AppCompatActivity {
 
     // request codes
     private final int BLE_ENABLE_REQUEST_CODE = 1;
-    private final int COARSE_LOCATION_PERMISSION_REQUEST_CODE = 2;
+    private final int FINE_LOCATION_PERMISSION_REQUEST_CODE = 2;
 
 
     // event handlers
@@ -79,7 +79,7 @@ public class BLEBridge extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
-            case COARSE_LOCATION_PERMISSION_REQUEST_CODE:
+            case FINE_LOCATION_PERMISSION_REQUEST_CODE:
                 if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(this, "You have to allow location access to use this mode.",
                             Toast.LENGTH_LONG).show();
@@ -141,7 +141,7 @@ public class BLEBridge extends AppCompatActivity {
         }
 
         bleConnection.enable(this, BLE_ENABLE_REQUEST_CODE);
-        bleConnection.requestLocationPermission(this, COARSE_LOCATION_PERMISSION_REQUEST_CODE);
+        bleConnection.requestLocationPermission(this, FINE_LOCATION_PERMISSION_REQUEST_CODE);
     }
 
 }
