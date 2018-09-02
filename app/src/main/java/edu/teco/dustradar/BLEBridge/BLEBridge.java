@@ -145,15 +145,14 @@ public class BLEBridge extends AppCompatActivity {
 
         Long currentTimestamp = System.currentTimeMillis();
         int minBackDifference = 300;
-        if ((currentTimestamp - lastTimestamp) < minBackDifference) {
-            super.onBackPressed();
+        if ((currentTimestamp - lastTimestamp) > minBackDifference) {
+            Snackbar.make(findViewById(R.id.blebridge_content), "Tap twice and fast to exit",
+                    Snackbar.LENGTH_LONG).setAction("Action", null).show();
+            lastTimestamp = currentTimestamp;
             return;
         }
 
-        Snackbar.make(findViewById(R.id.blebridge_content), "Tap twice and fast to exit",
-                Snackbar.LENGTH_LONG).setAction("Action", null).show();
-
-        lastTimestamp = currentTimestamp;
+        super.onBackPressed();
     }
 
 
