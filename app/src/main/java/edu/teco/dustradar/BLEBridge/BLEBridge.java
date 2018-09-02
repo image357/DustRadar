@@ -5,7 +5,9 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +23,7 @@ public class BLEBridge extends AppCompatActivity {
     private BLEConnection bleConnection;
 
     private Long lastTimestamp;
+    private boolean inSettings;
 
 
     // request codes
@@ -46,6 +49,9 @@ public class BLEBridge extends AppCompatActivity {
             return;
         }
 
+        PreferenceManager.setDefaultValues(this, R.xml.fragment_blebridge_settings, false);
+        inSettings = false;
+
         BLEBridgeConnect firstFragment = new BLEBridgeConnect();
         firstFragment.setArguments(getIntent().getExtras());
         getSupportFragmentManager().beginTransaction()
@@ -59,6 +65,12 @@ public class BLEBridge extends AppCompatActivity {
 
         lastTimestamp = System.currentTimeMillis();
         makePermissionChecks();
+    }
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 
 
@@ -106,6 +118,16 @@ public class BLEBridge extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
+            if (!inSettings) {
+                inSettings = true;
+
+                BLEBridgeSettings settingsFragment = new BLEBridgeSettings();
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                transaction.replace(R.id.fragment_container, settingsFragment);
+                transaction.addToBackStack(null);
+                transaction.commit();
+            }
+
             return true;
         }
 
@@ -115,8 +137,13 @@ public class BLEBridge extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        Long currentTimestamp = System.currentTimeMillis();
+        if (inSettings) {
+            inSettings = false;
+            super.onBackPressed();
+            return;
+        }
 
+        Long currentTimestamp = System.currentTimeMillis();
         int minBackDifference = 300;
         if ((currentTimestamp - lastTimestamp) < minBackDifference) {
             super.onBackPressed();

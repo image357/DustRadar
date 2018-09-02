@@ -20,4 +20,7 @@
     <string name="blebridge_switch_scan">Scanning</string>
     <string name="blebridge_button_connect">Connect</string>
     <string name="blebridge_button_connecting">Connecting</string>
+    <string name="blebridge_pref_debug_title">Enable debug mode</string>
+    <string name="blebridge_pref_debug_summary">This setting allows you to connect to a DustTracker device in debug mode.</string>
+
 </resources>
