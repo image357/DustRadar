@@ -1,6 +1,9 @@
 package edu.teco.dustradar.blebridge;
 
+import android.app.ActivityManager;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -10,16 +13,18 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import edu.teco.dustradar.R;
 import edu.teco.dustradar.bluetooth.BLEScan;
+import edu.teco.dustradar.bluetooth.BLEService;
 
 public class BLEBridge extends AppCompatActivity {
 
-    private static final String TAG = BLEBridge.class.getName();
+    private static final String TAG = BLEBridge.class.getSimpleName();
 
     private BLEScan bleScan;
 
@@ -153,13 +158,49 @@ public class BLEBridge extends AppCompatActivity {
             return;
         }
 
+        BLEService.stopService(this);
         super.onBackPressed();
     }
 
 
+    @Override
+    public void onDestroy() {
+        BLEService.stopService(this);
+        super.onDestroy();
+    }
+
+
+    // BroadcastReceiver
+
+    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (BLEService.BROADCAST_GATT_CONNECTED.equals(action)) {
+                // TODO: start new fragment
+            } else if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
+                // TODO: notify user about disconnect
+            } else if (BLEService.BROADCAST_GATT_SERVICES_DISCOVERED.equals(action)) {
+                // TODO: or start new fragment here
+            } else if (BLEService.BROADCAST_DATA_AVAILABLE.equals(action)) {
+                // TODO: handle data
+            }
+        }
+    };
+
+
     // public methods
 
-    public void InitiateConnection(BluetoothDevice device) {
+    public void InitiateBLEConnection(BluetoothDevice device) {
+        if (BLEService.isRunning(this)) {
+            Log.d(TAG, "Service is already running");
+            BLEService.stopService(this);
+        }
+
+        BLEService.startService(this, device);
+
+        // TODO: register BroadcastReceiver
+
         return;
     }
 

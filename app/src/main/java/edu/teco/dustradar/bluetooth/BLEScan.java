@@ -16,6 +16,8 @@ import android.support.v4.content.ContextCompat;
 
 public class BLEScan {
 
+    private static final String TAG = BLEScan.class.getSimpleName();
+
     // private members
     private final BluetoothAdapter mBluetoothAdapter;
     private BLEDeviceListAdapter mBLEDeviceListAdapter = null;
@@ -71,6 +73,10 @@ public class BLEScan {
 
     @SuppressWarnings("deprecation")
     public void startScan() {
+        if (scanning) {
+            return;
+        }
+
         scanning = true;
         AsyncTask.execute(new Runnable() {
             @Override
@@ -83,6 +89,10 @@ public class BLEScan {
 
     @SuppressWarnings("deprecation")
     public void stopScan() {
+        if (!scanning) {
+            return;
+        }
+
         scanning = false;
         AsyncTask.execute(new Runnable() {
             @Override

@@ -106,6 +106,7 @@ public class BLEBridgeScan extends Fragment {
             }
 
             connectButton.setText(R.string.blebridge_button_connecting);
+            ((BLEBridge) getActivity()).InitiateBLEConnection(device);
         }
     });
 
