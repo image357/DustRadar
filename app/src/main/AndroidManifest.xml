@@ -30,12 +30,16 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".BLEBridge.BLEBridge"
-            android:label="@string/title_activity_blebridge"
-            android:theme="@style/AppTheme.NoActionBar"
+            android:name=".blebridge.BLEBridge"
             android:configChanges="orientation|keyboardHidden"
-            android:screenOrientation="portrait">
-        </activity>
+            android:label="@string/title_activity_blebridge"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <service
+            android:name=".bluetooth.BLEService"
+            android:enabled="true"
+            android:exported="false"></service>
     </application>
 
 </manifest>

@@ -21,7 +21,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.VideoView;
 
-import edu.teco.dustradar.BLEBridge.BLEBridge;
+import edu.teco.dustradar.blebridge.BLEBridge;
 
 public class MainActivity extends AppCompatActivity {
 

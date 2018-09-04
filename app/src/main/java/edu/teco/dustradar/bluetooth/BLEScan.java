@@ -14,9 +14,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 
-import edu.teco.dustradar.R;
-
-public class BLEConnection {
+public class BLEScan {
 
     // private members
     private final BluetoothAdapter mBluetoothAdapter;
@@ -26,7 +24,7 @@ public class BLEConnection {
 
 
     // constructors
-    public BLEConnection(Activity activity) {
+    public BLEScan(Activity activity) {
         BluetoothManager bluetoothManager =
                 (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
 
@@ -35,7 +33,7 @@ public class BLEConnection {
     }
 
 
-    public BLEConnection(Activity activity, BLEDeviceListAdapter adapter) {
+    public BLEScan(Activity activity, BLEDeviceListAdapter adapter) {
         this(activity);
         mBLEDeviceListAdapter = adapter;
     }

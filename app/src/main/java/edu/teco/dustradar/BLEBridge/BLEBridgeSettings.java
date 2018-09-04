@@ -1,4 +1,4 @@
-package edu.teco.dustradar.BLEBridge;
+package edu.teco.dustradar.blebridge;
 
 
 import android.os.Bundle;

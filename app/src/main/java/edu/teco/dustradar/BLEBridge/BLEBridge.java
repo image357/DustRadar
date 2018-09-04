@@ -1,5 +1,6 @@
-package edu.teco.dustradar.BLEBridge;
+package edu.teco.dustradar.blebridge;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -14,13 +15,13 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import edu.teco.dustradar.R;
-import edu.teco.dustradar.bluetooth.BLEConnection;
+import edu.teco.dustradar.bluetooth.BLEScan;
 
 public class BLEBridge extends AppCompatActivity {
 
     private static final String TAG = BLEBridge.class.getName();
 
-    private BLEConnection bleConnection;
+    private BLEScan bleScan;
 
     private Long lastTimestamp;
     private boolean inSettings;
@@ -44,15 +45,15 @@ public class BLEBridge extends AppCompatActivity {
             return;
         }
 
-        bleConnection = new BLEConnection(this);
-        if (! bleConnection.hasBluetooth()) {
+        bleScan = new BLEScan(this);
+        if (! bleScan.hasBluetooth()) {
             return;
         }
 
         PreferenceManager.setDefaultValues(this, R.xml.fragment_blebridge_settings, false);
         inSettings = false;
 
-        BLEBridgeConnect firstFragment = new BLEBridgeConnect();
+        BLEBridgeScan firstFragment = new BLEBridgeScan();
         firstFragment.setArguments(getIntent().getExtras());
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, firstFragment).commit();
@@ -156,18 +157,25 @@ public class BLEBridge extends AppCompatActivity {
     }
 
 
+    // public methods
+
+    public void InitiateConnection(BluetoothDevice device) {
+        return;
+    }
+
+
     // private methods
 
     private void makePermissionChecks() {
-        if (! bleConnection.hasBluetooth()) {
+        if (! bleScan.hasBluetooth()) {
             Toast.makeText(this, "BLE is not supported on your device.",
                     Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        bleConnection.enable(this, BLE_ENABLE_REQUEST_CODE);
-        bleConnection.requestLocationPermission(this, FINE_LOCATION_PERMISSION_REQUEST_CODE);
+        bleScan.enable(this, BLE_ENABLE_REQUEST_CODE);
+        bleScan.requestLocationPermission(this, FINE_LOCATION_PERMISSION_REQUEST_CODE);
     }
 
 }

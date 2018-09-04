@@ -1,4 +1,4 @@
-package edu.teco.dustradar.BLEBridge;
+package edu.teco.dustradar.blebridge;
 
 import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
@@ -14,15 +14,15 @@ import android.widget.ListView;
 import android.widget.Switch;
 
 import edu.teco.dustradar.R;
-import edu.teco.dustradar.bluetooth.BLEConnection;
+import edu.teco.dustradar.bluetooth.BLEScan;
 import edu.teco.dustradar.bluetooth.BLEDeviceListAdapter;
 
 
-public class BLEBridgeConnect extends Fragment {
+public class BLEBridgeScan extends Fragment {
 
-    private static final String TAG = BLEBridgeConnect.class.getName();
+    private static final String TAG = BLEBridgeScan.class.getName();
 
-    BLEConnection bleConnection;
+    BLEScan bleScan;
     BLEDeviceListAdapter bleDeviceListAdapter;
 
     ListView listBLE;
@@ -32,7 +32,7 @@ public class BLEBridgeConnect extends Fragment {
 
     // constructors
 
-    public BLEBridgeConnect() {
+    public BLEBridgeScan() {
     }
 
 
@@ -42,7 +42,7 @@ public class BLEBridgeConnect extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView;
-        rootView = inflater.inflate(R.layout.fragment_blebridge_connect, container, false);
+        rootView = inflater.inflate(R.layout.fragment_blebridge_scan, container, false);
 
         connectButton = rootView.findViewById(R.id.button_connect);
         connectButton.setOnClickListener(onConnectButtonClick);
@@ -59,7 +59,7 @@ public class BLEBridgeConnect extends Fragment {
         listBLE.setAdapter(bleDeviceListAdapter);
         listBLE.setOnItemClickListener(onListClick);
 
-        bleConnection = new BLEConnection(getActivity(), bleDeviceListAdapter);
+        bleScan = new BLEScan(getActivity(), bleDeviceListAdapter);
 
         return rootView;
     }
@@ -71,15 +71,15 @@ public class BLEBridgeConnect extends Fragment {
 
         connectButton.setText(R.string.blebridge_button_connect);
 
-        bleConnection.startScan();
+        bleScan.startScan();
         scanningSwitch.setChecked(true);
     }
 
 
     @Override
     public void onPause () {
-        bleConnection.stopScan();
-        bleConnection.resetScanResults();
+        bleScan.stopScan();
+        bleScan.resetScanResults();
         scanningSwitch.setChecked(false);
         listBLE.clearChoices();
         listBLE.deferNotifyDataSetChanged();
@@ -114,10 +114,10 @@ public class BLEBridgeConnect extends Fragment {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
-                bleConnection.startScan();
+                bleScan.startScan();
             }
             else {
-                bleConnection.stopScan();
+                bleScan.stopScan();
             }
         }
     });
@@ -127,7 +127,7 @@ public class BLEBridgeConnect extends Fragment {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             scanningSwitch.setChecked(false);
-            bleConnection.stopScan();
+            bleScan.stopScan();
         }
     });
 
