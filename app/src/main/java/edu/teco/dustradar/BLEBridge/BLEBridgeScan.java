@@ -14,13 +14,13 @@ import android.widget.ListView;
 import android.widget.Switch;
 
 import edu.teco.dustradar.R;
-import edu.teco.dustradar.bluetooth.BLEScan;
 import edu.teco.dustradar.bluetooth.BLEDeviceListAdapter;
+import edu.teco.dustradar.bluetooth.BLEScan;
 
 
 public class BLEBridgeScan extends Fragment {
 
-    private static final String TAG = BLEBridgeScan.class.getName();
+    private static final String TAG = BLEBridgeScan.class.getSimpleName();
 
     BLEScan bleScan;
     BLEDeviceListAdapter bleDeviceListAdapter;

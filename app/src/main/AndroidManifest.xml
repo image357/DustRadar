@@ -9,6 +9,12 @@
     <uses-feature
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
+    <uses-feature
+        android:name="android.hardware.location.network"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -34,10 +40,14 @@
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/title_activity_blebridge"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name=".bluetooth.BLEService"
+            android:enabled="true"
+            android:exported="false" />
+        <service
+            android:name=".gps.GPSService"
             android:enabled="true"
             android:exported="false"></service>
     </application>

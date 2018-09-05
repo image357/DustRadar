@@ -1,6 +1,5 @@
 package edu.teco.dustradar.blebridge;
 
-import android.app.ActivityManager;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -21,6 +20,7 @@ import android.widget.Toast;
 import edu.teco.dustradar.R;
 import edu.teco.dustradar.bluetooth.BLEScan;
 import edu.teco.dustradar.bluetooth.BLEService;
+import edu.teco.dustradar.gps.GPSService;
 
 public class BLEBridge extends AppCompatActivity {
 
@@ -158,48 +158,22 @@ public class BLEBridge extends AppCompatActivity {
             return;
         }
 
-        BLEService.stopService(this);
+        stopServices();
         super.onBackPressed();
     }
 
 
     @Override
     public void onDestroy() {
-        BLEService.stopService(this);
+        stopServices();
         super.onDestroy();
     }
-
-
-    // BroadcastReceiver
-
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BLEService.BROADCAST_GATT_CONNECTED.equals(action)) {
-                // TODO: start new fragment
-            } else if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
-                // TODO: notify user about disconnect
-            } else if (BLEService.BROADCAST_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // TODO: or start new fragment here
-            } else if (BLEService.BROADCAST_DATA_AVAILABLE.equals(action)) {
-                // TODO: handle data
-            }
-        }
-    };
 
 
     // public methods
 
     public void InitiateBLEConnection(BluetoothDevice device) {
-        if (BLEService.isRunning(this)) {
-            Log.d(TAG, "Service is already running");
-            BLEService.stopService(this);
-        }
-
-        BLEService.startService(this, device);
-
-        // TODO: register BroadcastReceiver
+        startServices(device);
 
         return;
     }
@@ -219,4 +193,57 @@ public class BLEBridge extends AppCompatActivity {
         bleScan.requestLocationPermission(this, FINE_LOCATION_PERMISSION_REQUEST_CODE);
     }
 
+
+    private void startServices(BluetoothDevice device) {
+        if (BLEService.isRunning(this)) {
+            Log.d(TAG, "Service is already running");
+            BLEService.stopService(this, mGattUpdateReceiver);
+        }
+
+        if (GPSService.isRunning(this)) {
+            Log.d(TAG, "Service is already running");
+            GPSService.stopService(this);
+        }
+
+        GPSService.startService(this);
+        BLEService.startService(this, mGattUpdateReceiver, device);
+    }
+
+
+    private void stopServices() {
+        BLEService.stopService(this, mGattUpdateReceiver);
+        GPSService.stopService(this);
+
+        return;
+    }
+
+
+    // BroadcastReceiver
+
+    private final BroadcastReceiver mGattUpdateReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (BLEService.BROADCAST_GATT_CONNECTED.equals(action)) {
+                // handle connect events here
+
+            } else if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
+                // handle disconnect events here; note: reconnect is active in BLEService
+
+            } else if (BLEService.BROADCAST_GATT_SERVICES_DISCOVERED.equals(action)) {
+                // start BLEBridgeHandler Fragment
+                BLEBridgeHandler handlerFragment = new BLEBridgeHandler();
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                transaction.replace(R.id.fragment_container, handlerFragment);
+                transaction.commit();
+
+            } else if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
+                // handle data events here
+
+            } else if (BLEService.BROADCAST_BLE_METADATA_AVAILABLE.equals(action)) {
+            // handle metadata events here
+
+            }
+        }
+    });
 }

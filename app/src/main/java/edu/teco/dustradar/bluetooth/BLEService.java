@@ -1,6 +1,5 @@
 package edu.teco.dustradar.bluetooth;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -8,12 +7,16 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -24,37 +27,103 @@ public class BLEService extends Service {
     private final static String TAG = BLEService.class.getSimpleName();
 
     // static members
-
     public final static String INTENT_EXTRA_BLE_DEVICE_ADDRESS = "bleDeviceAddress";
 
     // UUIDs
-    public final static UUID DUSTTRACKER_DATA_SERVICE_UUID =
+    public final static UUID DATA_SERVICE_UUID =
             UUID.fromString("6e57fcf9-8064-4995-a3a8-e5ca44552192");
-    public final static UUID DUSTTRACKER_DATA_CHARACTERISTIC_UUID =
+    public final static UUID NOTIFY_CHARACTERISTIC_UUID =
             UUID.fromString("7a812f99-06fa-4d89-819d-98e9aafbd4ef");
-    public final static UUID DUSTTRACKER_DATA_DESCRIPTOR_UUID =
+    public final static UUID NOTIFY_DESCRIPTOR_UUID =
             UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    public final static UUID DATA_CHARACTERISTIC_UUID =
+            UUID.fromString("3525d870-6549-490a-bcc8-576cd6afde8a");
+    public final static UUID METADATA_CHARACTERISTIC_UUID =
+            UUID.fromString("0933fb51-155f-4f17-98c6-3a9663f51a3c");
+
 
     // broadcast actions
     public final static String BROADCAST_GATT_CONNECTED = "BROADCAST_GATT_CONNECTED";
     public final static String BROADCAST_GATT_DISCONNECTED = "BROADCAST_GATT_DISCONNECTED";
     public final static String BROADCAST_GATT_SERVICES_DISCOVERED = "BROADCAST_GATT_SERVICES_DISCOVERED";
-    public final static String BROADCAST_DATA_AVAILABLE = "BROADCAST_DATA_AVAILABLE";
-    public final static String BROADCAST_CREATE_DATASTREAM = "BROADCAST_CREATE_DATASTREAM";
+    public final static String BROADCAST_BLE_DATA_AVAILABLE = "BROADCAST_BLE_DATA_AVAILABLE";
+    public final static String BROADCAST_BLE_METADATA_AVAILABLE = "BROADCAST_BLE_METADATA_AVAILABLE";
 
 
     // members
-
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothDevice mDevice;
-    private BluetoothGatt mBluetoothGatt;
-
     private boolean shouldReconnect = false;
+
+    private BluetoothGattService DataService;
+    private BluetoothGattCharacteristic NotifyCharactersistic;
+    private BluetoothGattCharacteristic DataCharactersistic;
+
+
+    // static members
+    private static BluetoothGatt mBluetoothGatt = null;
+    private static BluetoothGattCharacteristic MetadataCharactersistic = null;
 
 
     // constructors
 
     public BLEService() {
+    }
+
+
+    // static service handlers
+
+    public static void startService(Context context, BroadcastReceiver receiver, BluetoothDevice device) {
+        if(context == null || device == null) {
+            throw new Resources.NotFoundException("Cannot start service without context or device");
+        }
+
+        if (isRunning(context)) {
+            Log.w(TAG, "Service not started because it is already running");
+            return;
+        }
+
+        // register BroadcastReceiver for context
+        context.registerReceiver(receiver, getGattUpdateIntentFilter());
+
+        // start service
+        Intent bleServiceIntent = new Intent(context, BLEService.class);
+        bleServiceIntent.putExtra(BLEService.INTENT_EXTRA_BLE_DEVICE_ADDRESS, device.getAddress());
+        context.startService(bleServiceIntent);
+    }
+
+
+    public static void stopService(Context context, BroadcastReceiver receiver) {
+        if(context == null) {
+            throw new Resources.NotFoundException("Cannot stop service without context");
+        }
+
+        // try tounregister BroadcastReceiver for context
+        try {
+            context.unregisterReceiver(receiver);
+        }
+        catch (IllegalArgumentException e) {
+            // pass
+        }
+
+        // stop service
+        Intent bleServiceIntent = new Intent(context, BLEService.class);
+        context.stopService(bleServiceIntent);
+    }
+
+
+    public static boolean isRunning(Context context) {
+        if(context == null) {
+            throw new Resources.NotFoundException("Cannot check service without context");
+        }
+
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (BLEService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -91,9 +160,14 @@ public class BLEService extends Service {
 
     @Override
     public void onDestroy() {
+        shouldReconnect = false;
+
         if (mBluetoothGatt != null) {
             mBluetoothGatt.close();
         }
+
+        mBluetoothGatt = null;
+        MetadataCharactersistic = null;
 
         super.onDestroy();
     }
@@ -106,45 +180,44 @@ public class BLEService extends Service {
     }
 
 
+    // static public methods
+
+    public static IntentFilter getGattUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BROADCAST_GATT_CONNECTED);
+        intentFilter.addAction(BROADCAST_GATT_DISCONNECTED);
+        intentFilter.addAction(BROADCAST_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(BROADCAST_BLE_DATA_AVAILABLE);
+        intentFilter.addAction(BROADCAST_BLE_METADATA_AVAILABLE);
+
+        return intentFilter;
+    }
+
+
+    public static void readMetadata() {
+        if (mBluetoothGatt == null || MetadataCharactersistic == null) {
+            Log.e(TAG, "Cannot read metadata characterstic");
+            return;
+        }
+
+        mBluetoothGatt.readCharacteristic(MetadataCharactersistic);
+    }
+
+
     // private methods
+
+    private void readCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        if (gatt == null || characteristic == null) {
+            throw new Resources.NotFoundException("Cannot read BLE without gatt or characteristic");
+        }
+
+        gatt.readCharacteristic(characteristic);
+    }
+
 
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
-    }
-
-
-    // static methods
-    public static void startService(Activity activity, BluetoothDevice device) {
-        if(activity == null || device == null) {
-            throw new Resources.NotFoundException("Cannot start service without activity or device");
-        }
-
-        if (isRunning(activity)) {
-            Log.w(TAG, "Service not started because it is already running");
-            return;
-        }
-
-        Intent bleServiceIntent = new Intent(activity, BLEService.class);
-        bleServiceIntent.putExtra(BLEService.INTENT_EXTRA_BLE_DEVICE_ADDRESS, device.getAddress());
-        activity.startService(bleServiceIntent);
-    }
-
-
-    public static void stopService(Activity activity) {
-        Intent bleServiceIntent = new Intent(activity, BLEService.class);
-        activity.stopService(bleServiceIntent);
-    }
-
-
-    public static boolean isRunning(Activity activity) {
-        ActivityManager manager = (ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (BLEService.class.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
     }
 
 
@@ -160,7 +233,7 @@ public class BLEService extends Service {
                     Log.i(TAG, "Connected to GATT server");
                     intentAction = BROADCAST_GATT_CONNECTED;
                     broadcastUpdate(intentAction);
-                    mBluetoothGatt.discoverServices();
+                    gatt.discoverServices();
                     break;
 
                 case BluetoothProfile.STATE_DISCONNECTED:
@@ -168,7 +241,8 @@ public class BLEService extends Service {
                     intentAction = BROADCAST_GATT_DISCONNECTED;
                     broadcastUpdate(intentAction);
                     if (shouldReconnect) {
-                        mBluetoothGatt.connect();
+                        Log.i(TAG, "Trying to reconnect to GATT server");
+                        gatt.connect();
                     }
                     break;
 
@@ -181,29 +255,77 @@ public class BLEService extends Service {
 
 
         @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+        public void onServicesDiscovered(BluetoothGatt pgatt, int status) {
+            final BluetoothGatt gatt = pgatt;
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.i(TAG, "GATT Services discovered");
-                BluetoothGattService service = mBluetoothGatt.getService(DUSTTRACKER_DATA_SERVICE_UUID);
-                BluetoothGattCharacteristic characteristic = service.getCharacteristic(DUSTTRACKER_DATA_CHARACTERISTIC_UUID);
-                mBluetoothGatt.setCharacteristicNotification(characteristic, true);
+                AsyncTask.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        // DataService
+                        DataService = gatt.getService(DATA_SERVICE_UUID);
 
-                // TODO: get descriptor
+                        NotifyCharactersistic =
+                                DataService.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
+                        gatt.setCharacteristicNotification(NotifyCharactersistic, true);
 
-                broadcastUpdate(BROADCAST_GATT_SERVICES_DISCOVERED);
+                        BluetoothGattDescriptor descriptor =
+                                NotifyCharactersistic.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
+                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                        gatt.writeDescriptor(descriptor);
+
+                        DataCharactersistic =
+                                DataService.getCharacteristic(DATA_CHARACTERISTIC_UUID);
+
+                        MetadataCharactersistic =
+                                DataService.getCharacteristic(METADATA_CHARACTERISTIC_UUID);
+
+                        broadcastUpdate(BROADCAST_GATT_SERVICES_DISCOVERED);
+                    }
+                });
             }
             else {
-                Log.d(TAG, "Unhandled status in onServicesDiscovered received: " + status);
+                Log.d(TAG, "Unhandled status in onServicesDiscovered(): " + status);
             }
         }
 
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            // TODO: handle read characteristic
-            String data = characteristic.getStringValue(0);
-            Log.d(TAG, "new data: " + data);
-            broadcastUpdate(BROADCAST_DATA_AVAILABLE);
+            if (characteristic.equals(NotifyCharactersistic)) {
+                readCharacteristic(gatt, DataCharactersistic);
+                return;
+            }
+
+            Log.w(TAG, "unhandled notification in onCharacteristicChanged()");
+        }
+
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (characteristic.equals(DataCharactersistic)) {
+                    String data = characteristic.getStringValue(0);
+                    Log.d(TAG, "data: " + data);
+                    broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE);
+                    // TODO: handle data
+                    return;
+                }
+
+                if (characteristic.equals(MetadataCharactersistic)) {
+                    String data = characteristic.getStringValue(0);
+                    Log.d(TAG, "metadata: " + data);
+                    broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE);
+                    // TODO: handle metadata
+                    return;
+                }
+
+                Log.w(TAG, "unhandled notification in onCharacteristicRead()");
+            }
+            else {
+                Log.d(TAG, "Unhandled status in onCharacteristicRead(): " + status);
+            }
         }
     });
 

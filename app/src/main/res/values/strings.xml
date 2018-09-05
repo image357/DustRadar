@@ -23,4 +23,7 @@
     <string name="blebridge_pref_debug_title">Enable debug mode</string>
     <string name="blebridge_pref_debug_summary">This setting allows you to connect to a DustTracker device in debug mode.</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>
