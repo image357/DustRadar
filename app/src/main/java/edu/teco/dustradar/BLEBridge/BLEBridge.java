@@ -174,8 +174,6 @@ public class BLEBridge extends AppCompatActivity {
 
     public void InitiateBLEConnection(BluetoothDevice device) {
         startServices(device);
-
-        return;
     }
 
 

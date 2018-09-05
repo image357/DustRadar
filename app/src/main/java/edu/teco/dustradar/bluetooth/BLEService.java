@@ -20,6 +20,8 @@ import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.UUID;
 
 public class BLEService extends Service {
@@ -50,9 +52,6 @@ public class BLEService extends Service {
     public final static String BROADCAST_BLE_METADATA_AVAILABLE = "BROADCAST_BLE_METADATA_AVAILABLE";
 
 
-    // members
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothDevice mDevice;
     private boolean shouldReconnect = false;
 
     private BluetoothGattService DataService;
@@ -63,6 +62,7 @@ public class BLEService extends Service {
     // static members
     private static BluetoothGatt mBluetoothGatt = null;
     private static BluetoothGattCharacteristic MetadataCharactersistic = null;
+    private static Queue<BluetoothGattCharacteristic> CharFIFO = new LinkedList<>();
 
 
     // constructors
@@ -137,14 +137,14 @@ public class BLEService extends Service {
 
         // get BluetoothAdapter
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
+        BluetoothAdapter mBluetoothAdapter = bluetoothManager.getAdapter();
         if (mBluetoothAdapter == null) {
             throw new Resources.NotFoundException("BluetoothAdapter is not available in BLEService");
         }
 
         // get BLE device
         String deviceAddress = intent.getStringExtra(INTENT_EXTRA_BLE_DEVICE_ADDRESS);
-        mDevice = mBluetoothAdapter.getRemoteDevice(deviceAddress);
+        BluetoothDevice mDevice = mBluetoothAdapter.getRemoteDevice(deviceAddress);
         if (mDevice == null) {
             throw new Resources.NotFoundException("BLEDevice is not available in BLEService");
         }
@@ -200,18 +200,33 @@ public class BLEService extends Service {
             return;
         }
 
-        mBluetoothGatt.readCharacteristic(MetadataCharactersistic);
+        CharFIFO.add(MetadataCharactersistic);
     }
 
 
     // private methods
 
     private void readCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-        if (gatt == null || characteristic == null) {
-            throw new Resources.NotFoundException("Cannot read BLE without gatt or characteristic");
+        if (gatt == null) {
+            throw new Resources.NotFoundException("Cannot read BLE without gatt");
         }
 
-        gatt.readCharacteristic(characteristic);
+        if (characteristic != null) {
+            CharFIFO.add(characteristic);
+        }
+
+        BluetoothGattCharacteristic newcharactersistic = CharFIFO.peek();
+        if (newcharactersistic == null) {
+            return;
+        }
+
+        boolean allowed = gatt.readCharacteristic(newcharactersistic);
+        if (allowed) {
+            CharFIFO.poll();
+        }
+        else {
+            Log.w(TAG, "No permission to read characteristic");
+        }
     }
 
 
@@ -294,7 +309,14 @@ public class BLEService extends Service {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             if (characteristic.equals(NotifyCharactersistic)) {
-                readCharacteristic(gatt, DataCharactersistic);
+                if (CharFIFO.size() == 0) {
+                    readCharacteristic(gatt, DataCharactersistic);
+                }
+                else {
+                    Log.i(TAG, "CharFIFO size: " + String.valueOf(CharFIFO.size()));
+                    readCharacteristic(gatt, null);
+                }
+
                 return;
             }
 
@@ -325,6 +347,12 @@ public class BLEService extends Service {
             }
             else {
                 Log.d(TAG, "Unhandled status in onCharacteristicRead(): " + status);
+            }
+
+            if (CharFIFO.size() != 0) {
+                // read next characteristic in queue
+                Log.i(TAG, "CharFIFO size: " + String.valueOf(CharFIFO.size()));
+                readCharacteristic(gatt, null);
             }
         }
     });

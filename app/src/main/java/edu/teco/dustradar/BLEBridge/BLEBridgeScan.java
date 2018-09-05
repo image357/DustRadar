@@ -2,6 +2,7 @@ package edu.teco.dustradar.blebridge;
 
 import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -39,7 +40,7 @@ public class BLEBridgeScan extends Fragment {
     // event handlers
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView;
         rootView = inflater.inflate(R.layout.fragment_blebridge_scan, container, false);
