@@ -145,6 +145,8 @@ public class GPSService extends Service implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
+        // TODO: make sophisticated location update
+        mLocation = location;
     }
 
     @Override
