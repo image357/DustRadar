@@ -1,5 +1,8 @@
 package edu.teco.dustradar.bluetooth;
 
+import android.Manifest;
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -15,9 +18,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.IBinder;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import java.util.LinkedList;
@@ -84,7 +90,7 @@ public class BLEService extends Service {
         }
 
         // register BroadcastReceiver for context
-        context.registerReceiver(receiver, getGattUpdateIntentFilter());
+        context.registerReceiver(receiver, getIntentFilter());
 
         // start service
         Intent bleServiceIntent = new Intent(context, BLEService.class);
@@ -180,9 +186,33 @@ public class BLEService extends Service {
     }
 
 
-    // static public methods
+    // static methods
 
-    public static IntentFilter getGattUpdateIntentFilter() {
+    public static boolean hasLocationPermission (Activity activity) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return true;
+        }
+
+        return (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED);
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.M)
+    public static void requestLocationPermission(Activity activity, int requestCode) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return;
+        }
+
+        if (hasLocationPermission(activity)) {
+            return;
+        }
+
+        activity.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, requestCode);
+    }
+
+
+    public static IntentFilter getIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BROADCAST_GATT_CONNECTED);
         intentFilter.addAction(BROADCAST_GATT_DISCONNECTED);

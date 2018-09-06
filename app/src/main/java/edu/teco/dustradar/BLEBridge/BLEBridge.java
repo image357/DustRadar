@@ -1,5 +1,6 @@
 package edu.teco.dustradar.blebridge;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -35,6 +36,7 @@ public class BLEBridge extends AppCompatActivity {
     // request codes
     private final int BLE_ENABLE_REQUEST_CODE = 1;
     private final int FINE_LOCATION_PERMISSION_REQUEST_CODE = 2;
+    private final int GPS_LOCATION_PERMISSION_REQUEST_CODE = 3;
 
 
     // event handlers
@@ -90,6 +92,13 @@ public class BLEBridge extends AppCompatActivity {
                     finish();
                 }
                 break;
+
+            case GPS_LOCATION_PERMISSION_REQUEST_CODE:
+                if (!GPSService.hasHighAccuracyPermission(this)) {
+                    Toast.makeText(this, "You have to enable high accuracy location services to use this mode.",
+                            Toast.LENGTH_LONG).show();
+                    finish();
+                }
         }
     }
 
@@ -189,59 +198,83 @@ public class BLEBridge extends AppCompatActivity {
 
         bleScan.enable(this, BLE_ENABLE_REQUEST_CODE);
         bleScan.requestLocationPermission(this, FINE_LOCATION_PERMISSION_REQUEST_CODE);
+        GPSService.requestHighAccuracyPermission(this, GPS_LOCATION_PERMISSION_REQUEST_CODE);
     }
 
 
     private void startServices(BluetoothDevice device) {
         if (BLEService.isRunning(this)) {
             Log.d(TAG, "Service is already running");
-            BLEService.stopService(this, mGattUpdateReceiver);
+            BLEService.stopService(this, mBLEReceiver);
         }
 
         if (GPSService.isRunning(this)) {
             Log.d(TAG, "Service is already running");
-            GPSService.stopService(this);
+            GPSService.stopService(this, mGPSReceiver);
         }
 
-        GPSService.startService(this);
-        BLEService.startService(this, mGattUpdateReceiver, device);
+        GPSService.startService(this, mGPSReceiver);
+        BLEService.startService(this, mBLEReceiver, device);
     }
 
 
     private void stopServices() {
-        BLEService.stopService(this, mGattUpdateReceiver);
-        GPSService.stopService(this);
+        BLEService.stopService(this, mBLEReceiver);
+        GPSService.stopService(this, mGPSReceiver);
 
         return;
     }
 
 
-    // BroadcastReceiver
+    // BroadcastReceivers
 
-    private final BroadcastReceiver mGattUpdateReceiver = (new BroadcastReceiver() {
+    private final BroadcastReceiver mBLEReceiver = (new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
+
             if (BLEService.BROADCAST_GATT_CONNECTED.equals(action)) {
                 // handle connect events here
+                return;
 
-            } else if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
+            }
+
+            if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
                 // handle disconnect events here; note: reconnect is active in BLEService
+                return;
+            }
 
-            } else if (BLEService.BROADCAST_GATT_SERVICES_DISCOVERED.equals(action)) {
+            if (BLEService.BROADCAST_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // start BLEBridgeHandler Fragment
                 BLEBridgeHandler handlerFragment = new BLEBridgeHandler();
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container, handlerFragment);
                 transaction.commit();
+                return;
+            }
 
-            } else if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
+            if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
                 // handle data events here
+                return;
+            }
 
-            } else if (BLEService.BROADCAST_BLE_METADATA_AVAILABLE.equals(action)) {
-            // handle metadata events here
-
+            if (BLEService.BROADCAST_BLE_METADATA_AVAILABLE.equals(action)) {
+                // handle metadata events here
+                return;
             }
         }
     });
+
+
+    private final BroadcastReceiver mGPSReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (GPSService.BROADCAST_LOCATION_PROVIDER_DISABLED.equals(action)) {
+                // already handled by onResume()
+                return;
+            }
+        }
+    });
+
 }
