@@ -30,6 +30,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
 
+import edu.teco.dustradar.gps.GPSService;
+
 public class BLEService extends Service {
 
     private final static String TAG = BLEService.class.getSimpleName();
@@ -46,6 +48,11 @@ public class BLEService extends Service {
             UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     public final static UUID DATA_CHARACTERISTIC_UUID =
             UUID.fromString("3525d870-6549-490a-bcc8-576cd6afde8a");
+    public final static UUID DATADESCRIPTION_CHARACTERISTIC_UUID =
+            UUID.fromString("aa1c2b71-e510-41bb-96b2-7129cf59f260");
+
+    public final static UUID METADATA_SERVICE_UUID =
+            UUID.fromString("aec37142-b2a4-4f05-a8b3-bf4602267641");
     public final static UUID METADATA_CHARACTERISTIC_UUID =
             UUID.fromString("0933fb51-155f-4f17-98c6-3a9663f51a3c");
 
@@ -55,19 +62,23 @@ public class BLEService extends Service {
     public final static String BROADCAST_GATT_DISCONNECTED = "BROADCAST_GATT_DISCONNECTED";
     public final static String BROADCAST_GATT_SERVICES_DISCOVERED = "BROADCAST_GATT_SERVICES_DISCOVERED";
     public final static String BROADCAST_BLE_DATA_AVAILABLE = "BROADCAST_BLE_DATA_AVAILABLE";
+    public final static String BROADCAST_BLE_DATADESCRIPTION_AVAILABLE = "BROADCAST_BLE_DATADESCRIPTION_AVAILABLE";
     public final static String BROADCAST_BLE_METADATA_AVAILABLE = "BROADCAST_BLE_METADATA_AVAILABLE";
 
 
     private boolean shouldReconnect = false;
 
     private BluetoothGattService DataService;
-    private BluetoothGattCharacteristic NotifyCharactersistic;
-    private BluetoothGattCharacteristic DataCharactersistic;
+    private BluetoothGattCharacteristic NotifyChar;
+    private BluetoothGattCharacteristic DataChar;
 
 
     // static members
     private static BluetoothGatt mBluetoothGatt = null;
-    private static BluetoothGattCharacteristic MetadataCharactersistic = null;
+    private static BluetoothGattService MetadataService = null;
+    private static BluetoothGattCharacteristic MetadataChar = null;
+    private static BluetoothGattCharacteristic DataDescriptionChar;
+
     private static Queue<BluetoothGattCharacteristic> CharFIFO = new LinkedList<>();
 
 
@@ -173,7 +184,9 @@ public class BLEService extends Service {
         }
 
         mBluetoothGatt = null;
-        MetadataCharactersistic = null;
+        MetadataService = null;
+        MetadataChar = null;
+        DataDescriptionChar = null;
 
         super.onDestroy();
     }
@@ -218,6 +231,7 @@ public class BLEService extends Service {
         intentFilter.addAction(BROADCAST_GATT_DISCONNECTED);
         intentFilter.addAction(BROADCAST_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BROADCAST_BLE_DATA_AVAILABLE);
+        intentFilter.addAction(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE);
         intentFilter.addAction(BROADCAST_BLE_METADATA_AVAILABLE);
 
         return intentFilter;
@@ -225,12 +239,22 @@ public class BLEService extends Service {
 
 
     public static void readMetadata() {
-        if (mBluetoothGatt == null || MetadataCharactersistic == null) {
+        if (mBluetoothGatt == null || MetadataChar == null) {
             Log.e(TAG, "Cannot read metadata characterstic");
             return;
         }
 
-        CharFIFO.add(MetadataCharactersistic);
+        CharFIFO.add(MetadataChar);
+    }
+
+
+    public static void readDataDescription() {
+        if (mBluetoothGatt == null || DataDescriptionChar == null) {
+            Log.e(TAG, "Cannot read datadescription characterstic");
+            return;
+        }
+
+        CharFIFO.add(DataDescriptionChar);
     }
 
 
@@ -311,20 +335,18 @@ public class BLEService extends Service {
                         // DataService
                         DataService = gatt.getService(DATA_SERVICE_UUID);
 
-                        NotifyCharactersistic =
-                                DataService.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
-                        gatt.setCharacteristicNotification(NotifyCharactersistic, true);
+                        NotifyChar = DataService.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
+                        gatt.setCharacteristicNotification(NotifyChar, true);
 
-                        BluetoothGattDescriptor descriptor =
-                                NotifyCharactersistic.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
+                        BluetoothGattDescriptor descriptor = NotifyChar.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
                         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                         gatt.writeDescriptor(descriptor);
 
-                        DataCharactersistic =
-                                DataService.getCharacteristic(DATA_CHARACTERISTIC_UUID);
+                        DataChar = DataService.getCharacteristic(DATA_CHARACTERISTIC_UUID);
+                        DataDescriptionChar = DataService.getCharacteristic(DATADESCRIPTION_CHARACTERISTIC_UUID);
 
-                        MetadataCharactersistic =
-                                DataService.getCharacteristic(METADATA_CHARACTERISTIC_UUID);
+                        MetadataService = gatt.getService(METADATA_SERVICE_UUID);
+                        MetadataChar = MetadataService.getCharacteristic(METADATA_CHARACTERISTIC_UUID);
 
                         broadcastUpdate(BROADCAST_GATT_SERVICES_DISCOVERED);
                     }
@@ -338,9 +360,9 @@ public class BLEService extends Service {
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            if (characteristic.equals(NotifyCharactersistic)) {
+            if (characteristic.equals(NotifyChar)) {
                 if (CharFIFO.size() == 0) {
-                    readCharacteristic(gatt, DataCharactersistic);
+                    readCharacteristic(gatt, DataChar);
                 }
                 else {
                     Log.i(TAG, "CharFIFO size: " + String.valueOf(CharFIFO.size()));
@@ -357,7 +379,7 @@ public class BLEService extends Service {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (characteristic.equals(DataCharactersistic)) {
+                if (characteristic.equals(DataChar)) {
                     String data = characteristic.getStringValue(0);
                     Log.d(TAG, "data: " + data);
                     broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE);
@@ -365,7 +387,15 @@ public class BLEService extends Service {
                     return;
                 }
 
-                if (characteristic.equals(MetadataCharactersistic)) {
+                if (characteristic.equals(DataDescriptionChar)) {
+                    String data = characteristic.getStringValue(0);
+                    Log.d(TAG, "datadescription: " + data);
+                    broadcastUpdate(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE);
+                    // TODO: handle datadescription
+                    return;
+                }
+
+                if (characteristic.equals(MetadataChar)) {
                     String data = characteristic.getStringValue(0);
                     Log.d(TAG, "metadata: " + data);
                     broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE);

@@ -31,6 +31,7 @@ public class BLEBridgeHandler extends Fragment {
         rootView = inflater.inflate(R.layout.fragment_blebridge_handler, container, false);
 
         BLEService.readMetadata();
+        BLEService.readDataDescription();
 
         return rootView;
     }

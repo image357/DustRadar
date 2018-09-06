@@ -21,6 +21,7 @@ import android.widget.Toast;
 import edu.teco.dustradar.R;
 import edu.teco.dustradar.bluetooth.BLEScan;
 import edu.teco.dustradar.bluetooth.BLEService;
+import edu.teco.dustradar.data.DataService;
 import edu.teco.dustradar.gps.GPSService;
 
 public class BLEBridge extends AppCompatActivity {
@@ -203,22 +204,29 @@ public class BLEBridge extends AppCompatActivity {
 
 
     private void startServices(BluetoothDevice device) {
-        if (BLEService.isRunning(this)) {
-            Log.d(TAG, "Service is already running");
-            BLEService.stopService(this, mBLEReceiver);
-        }
-
         if (GPSService.isRunning(this)) {
             Log.d(TAG, "Service is already running");
             GPSService.stopService(this, mGPSReceiver);
         }
 
+        if (BLEService.isRunning(this)) {
+            Log.d(TAG, "Service is already running");
+            BLEService.stopService(this, mBLEReceiver);
+        }
+
+        if (DataService.isRunning(this)) {
+            Log.d(TAG, "Service is already running");
+            DataService.stopService(this, mDataReceiver);
+        }
+
         GPSService.startService(this, mGPSReceiver);
         BLEService.startService(this, mBLEReceiver, device);
+        DataService.startService(this, mDataReceiver);
     }
 
 
     private void stopServices() {
+        DataService.stopService(this, mDataReceiver);
         BLEService.stopService(this, mBLEReceiver);
         GPSService.stopService(this, mGPSReceiver);
 
@@ -258,6 +266,11 @@ public class BLEBridge extends AppCompatActivity {
                 return;
             }
 
+            if (BLEService.BROADCAST_BLE_DATADESCRIPTION_AVAILABLE.equals(action)) {
+                // handle datadescription events here
+                return;
+            }
+
             if (BLEService.BROADCAST_BLE_METADATA_AVAILABLE.equals(action)) {
                 // handle metadata events here
                 return;
@@ -274,6 +287,14 @@ public class BLEBridge extends AppCompatActivity {
                 // already handled by onResume()
                 return;
             }
+        }
+    });
+
+
+    private final BroadcastReceiver mDataReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
         }
     });
 

@@ -29,7 +29,7 @@ import edu.teco.dustradar.bluetooth.BLEService;
 
 public class GPSService extends Service implements LocationListener {
 
-    private final static String TAG = BLEService.class.getSimpleName();
+    private final static String TAG = GPSService.class.getSimpleName();
 
     // broadcast actions
     public final static String BROADCAST_LOCATION_PROVIDER_DISABLED = "BROADCAST_LOCATION_PROVIDER_DISABLED";
