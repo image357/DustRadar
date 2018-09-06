@@ -7,11 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
-import android.location.LocationManager;
 import android.os.IBinder;
 import android.util.Log;
 
-import edu.teco.dustradar.gps.GPSService;
 
 public class DataService extends Service {
 

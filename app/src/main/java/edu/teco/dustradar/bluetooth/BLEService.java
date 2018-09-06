@@ -30,13 +30,11 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
 
-import edu.teco.dustradar.gps.GPSService;
-
 public class BLEService extends Service {
 
     private final static String TAG = BLEService.class.getSimpleName();
 
-    // static members
+    // intent extras key
     public final static String INTENT_EXTRA_BLE_DEVICE_ADDRESS = "bleDeviceAddress";
 
     // UUIDs
@@ -65,7 +63,10 @@ public class BLEService extends Service {
     public final static String BROADCAST_BLE_DATADESCRIPTION_AVAILABLE = "BROADCAST_BLE_DATADESCRIPTION_AVAILABLE";
     public final static String BROADCAST_BLE_METADATA_AVAILABLE = "BROADCAST_BLE_METADATA_AVAILABLE";
 
+    public final static String BROADCAST_EXTRA_DATA = "BROADCAST_EXTRA_DATA";
 
+
+    // private members
     private boolean shouldReconnect = false;
 
     private BluetoothGattService DataService;
@@ -290,6 +291,13 @@ public class BLEService extends Service {
     }
 
 
+    private void broadcastUpdate(final String action, final String data) {
+        final Intent intent = new Intent(action);
+        intent.putExtra(BROADCAST_EXTRA_DATA, data);
+        sendBroadcast(intent);
+    }
+
+
     // callbacks
 
     private final BluetoothGattCallback mGattCallback = (new BluetoothGattCallback() {
@@ -381,25 +389,19 @@ public class BLEService extends Service {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (characteristic.equals(DataChar)) {
                     String data = characteristic.getStringValue(0);
-                    Log.d(TAG, "data: " + data);
-                    broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE);
-                    // TODO: handle data
+                    broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE, data);
                     return;
                 }
 
                 if (characteristic.equals(DataDescriptionChar)) {
                     String data = characteristic.getStringValue(0);
-                    Log.d(TAG, "datadescription: " + data);
-                    broadcastUpdate(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE);
-                    // TODO: handle datadescription
+                    broadcastUpdate(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE, data);
                     return;
                 }
 
                 if (characteristic.equals(MetadataChar)) {
                     String data = characteristic.getStringValue(0);
-                    Log.d(TAG, "metadata: " + data);
-                    broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE);
-                    // TODO: handle metadata
+                    broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE, data);
                     return;
                 }
 
@@ -416,6 +418,5 @@ public class BLEService extends Service {
             }
         }
     });
-
-
+    
 }

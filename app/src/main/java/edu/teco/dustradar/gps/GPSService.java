@@ -5,8 +5,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Service;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,8 +21,6 @@ import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-
-import edu.teco.dustradar.bluetooth.BLEService;
 
 
 public class GPSService extends Service implements LocationListener {

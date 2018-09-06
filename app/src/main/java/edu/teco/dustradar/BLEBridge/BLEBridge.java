@@ -1,6 +1,5 @@
 package edu.teco.dustradar.blebridge;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -100,6 +99,7 @@ public class BLEBridge extends AppCompatActivity {
                             Toast.LENGTH_LONG).show();
                     finish();
                 }
+                break;
         }
     }
 
@@ -229,8 +229,6 @@ public class BLEBridge extends AppCompatActivity {
         DataService.stopService(this, mDataReceiver);
         BLEService.stopService(this, mBLEReceiver);
         GPSService.stopService(this, mGPSReceiver);
-
-        return;
     }
 
 
@@ -262,16 +260,22 @@ public class BLEBridge extends AppCompatActivity {
             }
 
             if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
+                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                Log.d(TAG, "data: " + data);
                 // handle data events here
                 return;
             }
 
             if (BLEService.BROADCAST_BLE_DATADESCRIPTION_AVAILABLE.equals(action)) {
+                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                Log.d(TAG, "datadescription: " + data);
                 // handle datadescription events here
                 return;
             }
 
             if (BLEService.BROADCAST_BLE_METADATA_AVAILABLE.equals(action)) {
+                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                Log.d(TAG, "metadata: " + data);
                 // handle metadata events here
                 return;
             }
