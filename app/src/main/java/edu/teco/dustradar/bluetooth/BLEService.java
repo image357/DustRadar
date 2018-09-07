@@ -190,7 +190,7 @@ public class BLEService extends Service {
         shouldReconnect = true;
         mBluetoothGatt = mDevice.connectGatt(this, true, mGattCallback);
 
-
+        Log.d(TAG, "BLEService started");
         return START_REDELIVER_INTENT;
     }
 

@@ -1,12 +1,13 @@
 package edu.teco.dustradar.data;
 
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class ISODate extends Date {
+public class ISODate extends Date implements Serializable {
 
     // constructors
 

@@ -74,11 +74,14 @@ public class BLEBridge extends AppCompatActivity {
 
         lastTimestamp = System.currentTimeMillis();
         makePermissionChecks();
+        registerBLEReceiver();
     }
 
 
     @Override
     public void onPause() {
+        unregisterBLEReceiver();
+
         super.onPause();
     }
 
@@ -191,6 +194,24 @@ public class BLEBridge extends AppCompatActivity {
 
     // private methods
 
+    private void registerBLEReceiver() {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BLEService.BROADCAST_FIRST_CONNECT);
+        filter.addAction(BLEService.BROADCAST_MISSING_SERVICE);
+        registerReceiver(mBLEReceiver, filter);
+    }
+
+
+    private void unregisterBLEReceiver() {
+        try {
+            unregisterReceiver(mBLEReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private void makePermissionChecks() {
         if (! bleScan.hasBluetooth()) {
             Toast.makeText(this, "BLE is not supported on your device.",
@@ -213,12 +234,6 @@ public class BLEBridge extends AppCompatActivity {
 
         if (BLEService.isRunning(this)) {
             Log.d(TAG, "Service is already running");
-            try {
-                unregisterReceiver(mBLEReceiver);
-            }
-            catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            }
             BLEService.stopService(this);
         }
 
@@ -227,11 +242,6 @@ public class BLEBridge extends AppCompatActivity {
             DataService.stopService(this);
         }
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BLEService.BROADCAST_FIRST_CONNECT);
-        filter.addAction(BLEService.BROADCAST_MISSING_SERVICE);
-        registerReceiver(mBLEReceiver, filter);
-
         GPSService.startService(this);
         BLEService.startService(this, device);
         DataService.startService(this);
@@ -239,13 +249,6 @@ public class BLEBridge extends AppCompatActivity {
 
 
     private void stopServices() {
-        try {
-            unregisterReceiver(mBLEReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-
         DataService.stopService(this);
         BLEService.stopService(this);
         GPSService.stopService(this);
@@ -260,11 +263,17 @@ public class BLEBridge extends AppCompatActivity {
             final String action = intent.getAction();
 
             if (BLEService.BROADCAST_FIRST_CONNECT.equals(action)) {
+                // get metadata
+                BLEService.readMetadata();
+                BLEService.readDataDescription();
+
                 // start BLEBridgeHandler Fragment
                 BLEBridgeHandler handlerFragment = new BLEBridgeHandler();
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container, handlerFragment);
                 transaction.commit();
+
+                Toast.makeText(context, "Connected", Toast.LENGTH_LONG).show();
                 return;
             }
 

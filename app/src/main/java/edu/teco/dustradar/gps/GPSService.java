@@ -115,9 +115,11 @@ public class GPSService extends Service implements LocationListener {
             mManger.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
         }
         catch (SecurityException e) {
+            Log.e(TAG, "Cannot access location providers");
             e.printStackTrace();
         }
 
+        Log.d(TAG, "GPSService started");
         return START_REDELIVER_INTENT;
     }
 
