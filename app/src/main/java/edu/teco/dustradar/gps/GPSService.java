@@ -5,7 +5,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,6 +17,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -40,6 +40,7 @@ public class GPSService extends Service implements LocationListener {
 
     // private members
 
+    private PowerManager.WakeLock wakeLock;
     private LocationManager mManger;
 
 
@@ -56,7 +57,7 @@ public class GPSService extends Service implements LocationListener {
 
     // static service handlers
 
-    public static void startService(Context context, BroadcastReceiver receiver) {
+    public static void startService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot start service without context or device");
         }
@@ -66,26 +67,15 @@ public class GPSService extends Service implements LocationListener {
             return;
         }
 
-        // register BroadcastReceiver for context
-        context.registerReceiver(receiver, getIntentFilter());
-
         // start service
         Intent bleServiceIntent = new Intent(context, GPSService.class);
         context.startService(bleServiceIntent);
     }
 
 
-    public static void stopService(Context context, BroadcastReceiver receiver) {
+    public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
-        }
-
-        // try tounregister BroadcastReceiver for context
-        try {
-            context.unregisterReceiver(receiver);
-        }
-        catch (IllegalArgumentException e) {
-            // pass
         }
 
         Intent bleServiceIntent = new Intent(context, GPSService.class);
@@ -112,6 +102,10 @@ public class GPSService extends Service implements LocationListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        PowerManager powerManager = (PowerManager) getSystemService(this.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DustRadar::GPSService::Wakelock");
+        wakeLock.acquire();
+
         mLocation = null;
         mManger = (LocationManager) getSystemService(this.LOCATION_SERVICE);
 
@@ -130,9 +124,11 @@ public class GPSService extends Service implements LocationListener {
 
     @Override
     public void onDestroy() {
+        Log.d(TAG, "GPSService destroyed");
         mManger.removeUpdates(this);
         mLocation = null;
 
+        wakeLock.release();
         super.onDestroy();
     }
 

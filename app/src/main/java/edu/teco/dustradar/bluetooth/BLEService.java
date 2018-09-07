@@ -14,7 +14,6 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -23,6 +22,7 @@ import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -71,6 +71,7 @@ public class BLEService extends Service {
     public final static String BROADCAST_BLE_METADATA_AVAILABLE = "BROADCAST_BLE_METADATA_AVAILABLE";
     public final static String BROADCAST_EXTRA_DATA = "BROADCAST_EXTRA_DATA";
     public final static String BROADCAST_MISSING_SERVICE = "BROADCAST_MISSING_SERVICE";
+    public final static String BROADCAST_FIRST_CONNECT = "BROADCAST_FIRST_CONNECT";
 
     private final static List<String> allBroadcasts = Arrays.asList(
             BROADCAST_GATT_CONNECTED,
@@ -80,16 +81,9 @@ public class BLEService extends Service {
             BROADCAST_BLE_DATADESCRIPTION_AVAILABLE,
             BROADCAST_BLE_METADATA_AVAILABLE,
             BROADCAST_EXTRA_DATA,
-            BROADCAST_MISSING_SERVICE
+            BROADCAST_MISSING_SERVICE,
+            BROADCAST_FIRST_CONNECT
     );
-
-
-    // private members
-    private boolean shouldReconnect = false;
-
-    private BluetoothGattService DataService;
-    private BluetoothGattCharacteristic NotifyChar;
-    private BluetoothGattCharacteristic DataChar;
 
 
     // static members
@@ -101,6 +95,17 @@ public class BLEService extends Service {
     private static Queue<BluetoothGattCharacteristic> CharFIFO = new LinkedList<>();
 
 
+    // private members
+    private boolean shouldReconnect = false;
+    private boolean firstConnect = false;
+
+    private BluetoothGattService DataService;
+    private BluetoothGattCharacteristic NotifyChar;
+    private BluetoothGattCharacteristic DataChar;
+
+    private PowerManager.WakeLock wakeLock;
+
+
     // constructors
 
     public BLEService() {
@@ -109,7 +114,7 @@ public class BLEService extends Service {
 
     // static service handlers
 
-    public static void startService(Context context, BroadcastReceiver receiver, BluetoothDevice device) {
+    public static void startService(Context context, BluetoothDevice device) {
         if(context == null || device == null) {
             throw new Resources.NotFoundException("Cannot start service without context or device");
         }
@@ -119,9 +124,6 @@ public class BLEService extends Service {
             return;
         }
 
-        // register BroadcastReceiver for context
-        context.registerReceiver(receiver, getIntentFilter());
-
         // start service
         Intent bleServiceIntent = new Intent(context, BLEService.class);
         bleServiceIntent.putExtra(BLEService.INTENT_EXTRA_BLE_DEVICE_ADDRESS, device.getAddress());
@@ -129,17 +131,9 @@ public class BLEService extends Service {
     }
 
 
-    public static void stopService(Context context, BroadcastReceiver receiver) {
+    public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
-        }
-
-        // try tounregister BroadcastReceiver for context
-        try {
-            context.unregisterReceiver(receiver);
-        }
-        catch (IllegalArgumentException e) {
-            // pass
         }
 
         // stop service
@@ -171,6 +165,12 @@ public class BLEService extends Service {
             throw new Resources.NotFoundException("Service started without intent");
         }
 
+        // get wakelock
+        PowerManager powerManager = (PowerManager) getSystemService(this.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DustRadar::BLEService::Wakelock");
+        wakeLock.acquire();
+
+
         // get BluetoothAdapter
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter mBluetoothAdapter = bluetoothManager.getAdapter();
@@ -186,6 +186,7 @@ public class BLEService extends Service {
         }
 
         // connect to device
+        firstConnect = true;
         shouldReconnect = true;
         mBluetoothGatt = mDevice.connectGatt(this, true, mGattCallback);
 
@@ -196,6 +197,7 @@ public class BLEService extends Service {
 
     @Override
     public void onDestroy() {
+        Log.d(TAG, "BLEService destroyed");
         shouldReconnect = false;
 
         if (mBluetoothGatt != null) {
@@ -207,6 +209,7 @@ public class BLEService extends Service {
         MetadataChar = null;
         DataDescriptionChar = null;
 
+        wakeLock.release();
         super.onDestroy();
     }
 
@@ -399,6 +402,11 @@ public class BLEService extends Service {
                         MetadataChar = MetadataService.getCharacteristic(METADATA_CHARACTERISTIC_UUID);
 
                         broadcastUpdate(BROADCAST_GATT_SERVICES_DISCOVERED);
+
+                        if (firstConnect) {
+                            broadcastUpdate(BROADCAST_FIRST_CONNECT);
+                            firstConnect = false;
+                        }
                     }
                 });
             }

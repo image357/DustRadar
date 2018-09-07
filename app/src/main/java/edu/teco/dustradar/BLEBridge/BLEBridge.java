@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -175,6 +176,7 @@ public class BLEBridge extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
+        Log.d(TAG, "BLEBridge destroyed");
         stopServices();
         super.onDestroy();
     }
@@ -206,29 +208,47 @@ public class BLEBridge extends AppCompatActivity {
     private void startServices(BluetoothDevice device) {
         if (GPSService.isRunning(this)) {
             Log.d(TAG, "Service is already running");
-            GPSService.stopService(this, mGPSReceiver);
+            GPSService.stopService(this);
         }
 
         if (BLEService.isRunning(this)) {
             Log.d(TAG, "Service is already running");
-            BLEService.stopService(this, mBLEReceiver);
+            try {
+                unregisterReceiver(mBLEReceiver);
+            }
+            catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
+            BLEService.stopService(this);
         }
 
         if (DataService.isRunning(this)) {
             Log.d(TAG, "Service is already running");
-            DataService.stopService(this, mDataReceiver);
+            DataService.stopService(this);
         }
 
-        GPSService.startService(this, mGPSReceiver);
-        BLEService.startService(this, mBLEReceiver, device);
-        DataService.startService(this, mDataReceiver);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BLEService.BROADCAST_FIRST_CONNECT);
+        filter.addAction(BLEService.BROADCAST_MISSING_SERVICE);
+        registerReceiver(mBLEReceiver, filter);
+
+        GPSService.startService(this);
+        BLEService.startService(this, device);
+        DataService.startService(this);
     }
 
 
     private void stopServices() {
-        DataService.stopService(this, mDataReceiver);
-        BLEService.stopService(this, mBLEReceiver);
-        GPSService.stopService(this, mGPSReceiver);
+        try {
+            unregisterReceiver(mBLEReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+
+        DataService.stopService(this);
+        BLEService.stopService(this);
+        GPSService.stopService(this);
     }
 
 
@@ -239,44 +259,12 @@ public class BLEBridge extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if (BLEService.BROADCAST_GATT_CONNECTED.equals(action)) {
-                // handle connect events here
-                return;
-
-            }
-
-            if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
-                // handle disconnect events here; note: reconnect is active in BLEService
-                return;
-            }
-
-            if (BLEService.BROADCAST_GATT_SERVICES_DISCOVERED.equals(action)) {
+            if (BLEService.BROADCAST_FIRST_CONNECT.equals(action)) {
                 // start BLEBridgeHandler Fragment
                 BLEBridgeHandler handlerFragment = new BLEBridgeHandler();
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container, handlerFragment);
                 transaction.commit();
-                return;
-            }
-
-            if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
-                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
-                Log.d(TAG, "data: " + data);
-                // handle data events here
-                return;
-            }
-
-            if (BLEService.BROADCAST_BLE_DATADESCRIPTION_AVAILABLE.equals(action)) {
-                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
-                Log.d(TAG, "datadescription: " + data);
-                // handle datadescription events here
-                return;
-            }
-
-            if (BLEService.BROADCAST_BLE_METADATA_AVAILABLE.equals(action)) {
-                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
-                Log.d(TAG, "metadata: " + data);
-                // handle metadata events here
                 return;
             }
 
@@ -286,27 +274,8 @@ public class BLEBridge extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
                 stopServices();
                 finish();
-            }
-        }
-    });
-
-
-    private final BroadcastReceiver mGPSReceiver = (new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (GPSService.BROADCAST_LOCATION_PROVIDER_DISABLED.equals(action)) {
-                // already handled by onResume()
                 return;
             }
-        }
-    });
-
-
-    private final BroadcastReceiver mDataReceiver = (new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
         }
     });
 

@@ -30,4 +30,5 @@ dependencies {
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support:preference-v7:27.1.1'
     implementation files('libs/tape-1.2.3.jar')
+    implementation 'com.google.code.gson:gson:2.8.5'
 }

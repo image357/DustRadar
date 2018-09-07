@@ -8,10 +8,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;
+
+import edu.teco.dustradar.bluetooth.BLEService;
 
 
 public class DataService extends Service {
@@ -23,6 +26,10 @@ public class DataService extends Service {
     );
 
 
+    // private members
+    private PowerManager.WakeLock wakeLock;
+
+
     // constructors
 
     public DataService() {
@@ -31,7 +38,7 @@ public class DataService extends Service {
 
     // static service handlers
 
-    public static void startService(Context context, BroadcastReceiver receiver) {
+    public static void startService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot start service without context or device");
         }
@@ -41,26 +48,15 @@ public class DataService extends Service {
             return;
         }
 
-        // register BroadcastReceiver for context
-        context.registerReceiver(receiver, getIntentFilter());
-
         // start service
         Intent bleServiceIntent = new Intent(context, DataService.class);
         context.startService(bleServiceIntent);
     }
 
 
-    public static void stopService(Context context, BroadcastReceiver receiver) {
+    public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
-        }
-
-        // try tounregister BroadcastReceiver for context
-        try {
-            context.unregisterReceiver(receiver);
-        }
-        catch (IllegalArgumentException e) {
-            // pass
         }
 
         Intent bleServiceIntent = new Intent(context, DataService.class);
@@ -87,11 +83,26 @@ public class DataService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        PowerManager powerManager = (PowerManager) getSystemService(this.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DustRadar::DataService::Wakelock");
+        wakeLock.acquire();
+
+        registerReceiver(mBLEReceiver, BLEService.getIntentFilter());
+
         return START_REDELIVER_INTENT;
     }
 
 
     @Override public void onDestroy() {
+        Log.d(TAG, "DataService destroyed");
+        try {
+            unregisterReceiver(mBLEReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+
+        wakeLock.release();
         super.onDestroy();
     }
 
@@ -114,4 +125,35 @@ public class DataService extends Service {
 
         return intentFilter;
     }
+
+
+    // BroadcastReceivers
+
+    private final BroadcastReceiver mBLEReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
+                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                Log.d(TAG, "data: " + data);
+                // TODO: handle data
+                return;
+            }
+
+            if (BLEService.BROADCAST_BLE_DATADESCRIPTION_AVAILABLE.equals(action)) {
+                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                Log.d(TAG, "datadescription: " + data);
+                // TODO: handle datadescription
+                return;
+            }
+
+            if (BLEService.BROADCAST_BLE_METADATA_AVAILABLE.equals(action)) {
+                String data = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                Log.d(TAG, "metadata: " + data);
+                // TODO: handle metadata
+                return;
+            }
+        }
+    });
 }
