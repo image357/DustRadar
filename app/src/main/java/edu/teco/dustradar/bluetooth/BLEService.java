@@ -26,7 +26,9 @@ import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
 
@@ -54,16 +56,32 @@ public class BLEService extends Service {
     public final static UUID METADATA_CHARACTERISTIC_UUID =
             UUID.fromString("0933fb51-155f-4f17-98c6-3a9663f51a3c");
 
+    private final static List<UUID> requiredServiceUUIDs = Arrays.asList(
+            DATA_SERVICE_UUID,
+            METADATA_SERVICE_UUID
+    );
 
-    // broadcast actions
+
+    // broadcasts
     public final static String BROADCAST_GATT_CONNECTED = "BROADCAST_GATT_CONNECTED";
     public final static String BROADCAST_GATT_DISCONNECTED = "BROADCAST_GATT_DISCONNECTED";
     public final static String BROADCAST_GATT_SERVICES_DISCOVERED = "BROADCAST_GATT_SERVICES_DISCOVERED";
     public final static String BROADCAST_BLE_DATA_AVAILABLE = "BROADCAST_BLE_DATA_AVAILABLE";
     public final static String BROADCAST_BLE_DATADESCRIPTION_AVAILABLE = "BROADCAST_BLE_DATADESCRIPTION_AVAILABLE";
     public final static String BROADCAST_BLE_METADATA_AVAILABLE = "BROADCAST_BLE_METADATA_AVAILABLE";
-
     public final static String BROADCAST_EXTRA_DATA = "BROADCAST_EXTRA_DATA";
+    public final static String BROADCAST_MISSING_SERVICE = "BROADCAST_MISSING_SERVICE";
+
+    private final static List<String> allBroadcasts = Arrays.asList(
+            BROADCAST_GATT_CONNECTED,
+            BROADCAST_GATT_DISCONNECTED,
+            BROADCAST_GATT_SERVICES_DISCOVERED,
+            BROADCAST_BLE_DATA_AVAILABLE,
+            BROADCAST_BLE_DATADESCRIPTION_AVAILABLE,
+            BROADCAST_BLE_METADATA_AVAILABLE,
+            BROADCAST_EXTRA_DATA,
+            BROADCAST_MISSING_SERVICE
+    );
 
 
     // private members
@@ -228,12 +246,10 @@ public class BLEService extends Service {
 
     public static IntentFilter getIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BROADCAST_GATT_CONNECTED);
-        intentFilter.addAction(BROADCAST_GATT_DISCONNECTED);
-        intentFilter.addAction(BROADCAST_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BROADCAST_BLE_DATA_AVAILABLE);
-        intentFilter.addAction(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE);
-        intentFilter.addAction(BROADCAST_BLE_METADATA_AVAILABLE);
+
+        for(String broadcast : allBroadcasts) {
+            intentFilter.addAction(broadcast);
+        }
 
         return intentFilter;
     }
@@ -282,6 +298,27 @@ public class BLEService extends Service {
         else {
             Log.w(TAG, "No permission to read characteristic");
         }
+    }
+
+
+    private boolean hasRequiredServices(BluetoothGatt gatt) {
+        List<BluetoothGattService> services = gatt.getServices();
+
+        int foundServices = 0;
+
+        for (BluetoothGattService service : services) {
+            for (UUID uuid : requiredServiceUUIDs) {
+                if (uuid.equals(service.getUuid())) {
+                    foundServices++;
+                }
+            }
+        }
+
+        if (foundServices == requiredServiceUUIDs.size()) {
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -340,20 +377,25 @@ public class BLEService extends Service {
                 AsyncTask.execute(new Runnable() {
                     @Override
                     public void run() {
-                        // DataService
-                        DataService = gatt.getService(DATA_SERVICE_UUID);
+                        if (!hasRequiredServices(gatt)) {
+                            broadcastUpdate(BROADCAST_MISSING_SERVICE);
+                            return;
+                        }
 
+                        // services
+                        DataService = gatt.getService(DATA_SERVICE_UUID);
+                        MetadataService = gatt.getService(METADATA_SERVICE_UUID);
+
+                        // notify characterstic
                         NotifyChar = DataService.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
                         gatt.setCharacteristicNotification(NotifyChar, true);
-
                         BluetoothGattDescriptor descriptor = NotifyChar.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
                         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                         gatt.writeDescriptor(descriptor);
 
+                        // other characterstics
                         DataChar = DataService.getCharacteristic(DATA_CHARACTERISTIC_UUID);
                         DataDescriptionChar = DataService.getCharacteristic(DATADESCRIPTION_CHARACTERISTIC_UUID);
-
-                        MetadataService = gatt.getService(METADATA_SERVICE_UUID);
                         MetadataChar = MetadataService.getCharacteristic(METADATA_CHARACTERISTIC_UUID);
 
                         broadcastUpdate(BROADCAST_GATT_SERVICES_DISCOVERED);

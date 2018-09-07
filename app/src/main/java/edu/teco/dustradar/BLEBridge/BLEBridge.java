@@ -279,6 +279,14 @@ public class BLEBridge extends AppCompatActivity {
                 // handle metadata events here
                 return;
             }
+
+            if (BLEService.BROADCAST_MISSING_SERVICE.equals(action)) {
+                Log.w(TAG, "user selected unsupported device");
+                Toast.makeText(context, "You have to select a DustTracker device.",
+                        Toast.LENGTH_LONG).show();
+                stopServices();
+                finish();
+            }
         }
     });
 

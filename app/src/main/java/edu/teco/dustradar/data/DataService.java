@@ -10,10 +10,17 @@ import android.content.res.Resources;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.util.Arrays;
+import java.util.List;
+
 
 public class DataService extends Service {
 
     private final static String TAG = DataService.class.getSimpleName();
+
+    // broadcasts
+    private final static List<String> allBroadcasts = Arrays.asList(
+    );
 
 
     // constructors
@@ -100,6 +107,10 @@ public class DataService extends Service {
 
     public static IntentFilter getIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
+
+        for(String broadcast : allBroadcasts) {
+            intentFilter.addAction(broadcast);
+        }
 
         return intentFilter;
     }

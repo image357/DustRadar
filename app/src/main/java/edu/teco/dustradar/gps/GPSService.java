@@ -22,6 +22,9 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
+import java.util.Arrays;
+import java.util.List;
+
 
 public class GPSService extends Service implements LocationListener {
 
@@ -29,6 +32,10 @@ public class GPSService extends Service implements LocationListener {
 
     // broadcast actions
     public final static String BROADCAST_LOCATION_PROVIDER_DISABLED = "BROADCAST_LOCATION_PROVIDER_DISABLED";
+
+    private final static List<String> allBroadcasts = Arrays.asList(
+            BROADCAST_LOCATION_PROVIDER_DISABLED
+    );
 
 
     // private members
@@ -234,7 +241,10 @@ public class GPSService extends Service implements LocationListener {
 
     public static IntentFilter getIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BROADCAST_LOCATION_PROVIDER_DISABLED);
+
+        for(String broadcast : allBroadcasts) {
+            intentFilter.addAction(broadcast);
+        }
 
         return intentFilter;
     }
