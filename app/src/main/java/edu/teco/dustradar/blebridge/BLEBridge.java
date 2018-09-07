@@ -1,12 +1,13 @@
 package edu.teco.dustradar.blebridge;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
@@ -28,10 +29,15 @@ public class BLEBridge extends AppCompatActivity {
 
     private static final String TAG = BLEBridge.class.getSimpleName();
 
+    // private methods
+
     private BLEScan bleScan;
 
     private Long lastTimestamp;
     private boolean inSettings;
+
+    private boolean shouldTimeout;
+    private final int timeoutTime = 10000;
 
 
     // request codes
@@ -75,6 +81,7 @@ public class BLEBridge extends AppCompatActivity {
         lastTimestamp = System.currentTimeMillis();
         makePermissionChecks();
         registerBLEReceiver();
+        shouldTimeout = false;
     }
 
 
@@ -189,16 +196,29 @@ public class BLEBridge extends AppCompatActivity {
 
     public void InitiateBLEConnection(BluetoothDevice device) {
         startServices(device);
+
+        shouldTimeout = true;
+
+
+        final Handler handler = new Handler();
+        final Activity activity = this;
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (shouldTimeout) {
+                    Toast.makeText(activity, "Connection timed out.", Toast.LENGTH_LONG).show();
+                    activity.finish();
+                    return;
+                }
+            }
+        }, timeoutTime);
     }
 
 
     // private methods
 
     private void registerBLEReceiver() {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BLEService.BROADCAST_FIRST_CONNECT);
-        filter.addAction(BLEService.BROADCAST_MISSING_SERVICE);
-        registerReceiver(mBLEReceiver, filter);
+        registerReceiver(mBLEReceiver, BLEService.getIntentFilter());
     }
 
 
@@ -263,6 +283,8 @@ public class BLEBridge extends AppCompatActivity {
             final String action = intent.getAction();
 
             if (BLEService.BROADCAST_FIRST_CONNECT.equals(action)) {
+                shouldTimeout = false;
+
                 // get metadata
                 BLEService.readMetadata();
                 BLEService.readDataDescription();

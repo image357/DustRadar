@@ -23,12 +23,16 @@ public class BLEBridgeScan extends Fragment {
 
     private static final String TAG = BLEBridgeScan.class.getSimpleName();
 
-    BLEScan bleScan;
-    BLEDeviceListAdapter bleDeviceListAdapter;
+    // private members
 
-    ListView listBLE;
-    Button connectButton;
-    Switch scanningSwitch;
+    private BLEScan bleScan;
+    private BLEDeviceListAdapter bleDeviceListAdapter;
+
+    private ListView listBLE;
+    private Button connectButton;
+    private Switch scanningSwitch;
+
+    private boolean isConnecting;
 
 
     // constructors
@@ -70,6 +74,7 @@ public class BLEBridgeScan extends Fragment {
     public void onResume() {
         super.onResume();
 
+        isConnecting = false;
         connectButton.setText(R.string.blebridge_button_connect);
 
         bleScan.startScan();
@@ -106,8 +111,11 @@ public class BLEBridgeScan extends Fragment {
                 return;
             }
 
-            connectButton.setText(R.string.blebridge_button_connecting);
-            ((BLEBridge) getActivity()).InitiateBLEConnection(device);
+            if (!isConnecting) {
+                isConnecting = true;
+                connectButton.setText(R.string.blebridge_button_connecting);
+                ((BLEBridge) getActivity()).InitiateBLEConnection(device);
+            }
         }
     });
 
