@@ -26,6 +26,7 @@ public class BLEBridgeHandler extends Fragment {
     private static final String TAG = BLEBridgeHandler.class.getSimpleName();
 
     // private members
+
     Switch recordingSwtich;
     Switch transmittingSwitch;
     TextView dataPoints;

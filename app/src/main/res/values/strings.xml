@@ -24,7 +24,11 @@
     <string name="blebridge_switch_transmit">Transmitting</string>
     <string name="stored_datapoints">Stored Datapoints:</string>
 
-    <string name="blebridge_pref_debug_title">Enable debug mode</string>
-    <string name="blebridge_pref_debug_summary">This setting allows you to connect to a DustTracker device in debug mode.</string>
+    <string name="blebridge_pref_default_key">blebridge_pref_debug_key</string>
+    <string name="blebridge_pref_default_title">Use default values</string>
+    <string name="blebridge_pref_default_summary">This allows you to reset the settings.</string>
+    <string name="blebridge_pref_frosturl_key">blebridge_pref_frosturl_key</string>
+    <string name="blebridge_pref_frosturl_title">SensorThings Server URL</string>
+    <string name="blebridge_pref_frosturl_summary">This setting allows you to set the remote URL of the SensorThings server which stores your measurement data.</string>
 
 </resources>

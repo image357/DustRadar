@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -167,6 +168,17 @@ public class BLEBridge extends AppCompatActivity {
         if (inSettings) {
             inSettings = false;
             super.onBackPressed();
+
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+            String key = getResources().getString(R.string.blebridge_pref_default_key);
+            boolean usedefault = sharedPref.getBoolean(key, false);
+            if (usedefault) {
+                Log.i(TAG, "using default values");
+                sharedPref.edit().clear().commit();
+                PreferenceManager.setDefaultValues(this, R.xml.fragment_blebridge_settings, true);
+            }
+
+            // TODO: broadcast new preferences
             return;
         }
 

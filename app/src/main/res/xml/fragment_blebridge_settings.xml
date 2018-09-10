@@ -3,10 +3,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <CheckBoxPreference
-        android:key="pref_debug"
-        android:title="@string/blebridge_pref_debug_title"
-        android:summary="@string/blebridge_pref_debug_summary"
+        android:key="@string/blebridge_pref_default_key"
+        android:title="@string/blebridge_pref_default_title"
+        android:summary="@string/blebridge_pref_default_summary"
         android:defaultValue="false" />
+
+    <EditTextPreference
+        android:key="@string/blebridge_pref_frosturl_key"
+        android:title="@string/blebridge_pref_frosturl_title"
+        android:summary="@string/blebridge_pref_frosturl_summary"
+        android:defaultValue="http://smartaqnet.teco.edu:8080/FROST-Server" />
 
 
 </PreferenceScreen>
