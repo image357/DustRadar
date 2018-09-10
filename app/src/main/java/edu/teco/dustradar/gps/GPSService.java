@@ -68,8 +68,8 @@ public class GPSService extends Service implements LocationListener {
         }
 
         // start service
-        Intent bleServiceIntent = new Intent(context, GPSService.class);
-        context.startService(bleServiceIntent);
+        Intent serviceIntent = new Intent(context, GPSService.class);
+        context.startService(serviceIntent);
     }
 
 
@@ -78,8 +78,8 @@ public class GPSService extends Service implements LocationListener {
             throw new Resources.NotFoundException("Cannot stop service without context");
         }
 
-        Intent bleServiceIntent = new Intent(context, GPSService.class);
-        context.stopService(bleServiceIntent);
+        Intent serviceIntent = new Intent(context, GPSService.class);
+        context.stopService(serviceIntent);
     }
 
 
@@ -119,14 +119,14 @@ public class GPSService extends Service implements LocationListener {
             e.printStackTrace();
         }
 
-        Log.d(TAG, "GPSService started");
+        Log.i(TAG, "GPSService started");
         return START_REDELIVER_INTENT;
     }
 
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "GPSService destroyed");
+        Log.i(TAG, "GPSService destroyed");
         mManger.removeUpdates(this);
         mLocation = null;
 

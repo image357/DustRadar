@@ -63,8 +63,8 @@ public class DataService extends Service {
         }
 
         // start service
-        Intent bleServiceIntent = new Intent(context, DataService.class);
-        context.startService(bleServiceIntent);
+        Intent serviceIntent = new Intent(context, DataService.class);
+        context.startService(serviceIntent);
     }
 
 
@@ -73,8 +73,8 @@ public class DataService extends Service {
             throw new Resources.NotFoundException("Cannot stop service without context");
         }
 
-        Intent bleServiceIntent = new Intent(context, DataService.class);
-        context.stopService(bleServiceIntent);
+        Intent serviceIntent = new Intent(context, DataService.class);
+        context.stopService(serviceIntent);
     }
 
 
@@ -115,13 +115,13 @@ public class DataService extends Service {
 
         registerReceiver(mBLEReceiver, BLEService.getIntentFilter());
 
-        Log.d(TAG, "DataService started");
+        Log.i(TAG, "DataService started");
         return START_REDELIVER_INTENT;
     }
 
 
     @Override public void onDestroy() {
-        Log.d(TAG, "DataService destroyed");
+        Log.i(TAG, "DataService destroyed");
         shouldRecord = false;
 
         // close BroadcastReceiver
@@ -261,7 +261,7 @@ public class DataService extends Service {
                         byte[] bytes = DataObject.serialize(data);
                         queueFile.add(bytes);
                         broadcastUpdate(BROADCAST_DATA_STORED);
-                        Log.d(TAG, "stored data: " + msg + " - total: " + String.valueOf(queueFile.size()));
+                        Log.i(TAG, "stored data: " + msg + " - total: " + String.valueOf(queueFile.size()));
                     }
                     catch (Exception e) {
                         e.printStackTrace();

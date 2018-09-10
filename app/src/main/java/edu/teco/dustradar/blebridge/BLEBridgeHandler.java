@@ -18,6 +18,7 @@ import android.widget.TextView;
 import edu.teco.dustradar.R;
 import edu.teco.dustradar.bluetooth.BLEService;
 import edu.teco.dustradar.data.DataService;
+import edu.teco.dustradar.sensorthings.HTTPService;
 
 
 public class BLEBridgeHandler extends Fragment {
@@ -84,7 +85,7 @@ public class BLEBridgeHandler extends Fragment {
     private CompoundButton.OnCheckedChangeListener onTransmittingSwitchChange = (new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            // TODO: switch transmitting here
+            HTTPService.setTransmit(isChecked);
         }
     });
 

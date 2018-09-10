@@ -125,9 +125,9 @@ public class BLEService extends Service {
         }
 
         // start service
-        Intent bleServiceIntent = new Intent(context, BLEService.class);
-        bleServiceIntent.putExtra(BLEService.INTENT_EXTRA_BLE_DEVICE_ADDRESS, device.getAddress());
-        context.startService(bleServiceIntent);
+        Intent serviceIntent = new Intent(context, BLEService.class);
+        serviceIntent.putExtra(BLEService.INTENT_EXTRA_BLE_DEVICE_ADDRESS, device.getAddress());
+        context.startService(serviceIntent);
     }
 
 
@@ -137,8 +137,8 @@ public class BLEService extends Service {
         }
 
         // stop service
-        Intent bleServiceIntent = new Intent(context, BLEService.class);
-        context.stopService(bleServiceIntent);
+        Intent serviceIntent = new Intent(context, BLEService.class);
+        context.stopService(serviceIntent);
     }
 
 
@@ -190,14 +190,14 @@ public class BLEService extends Service {
         shouldReconnect = true;
         mBluetoothGatt = mDevice.connectGatt(this, true, mGattCallback);
 
-        Log.d(TAG, "BLEService started");
+        Log.i(TAG, "BLEService started");
         return START_REDELIVER_INTENT;
     }
 
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "BLEService destroyed");
+        Log.i(TAG, "BLEService destroyed");
         shouldReconnect = false;
 
         if (mBluetoothGatt != null) {
@@ -364,7 +364,7 @@ public class BLEService extends Service {
                     break;
 
                 default:
-                    Log.d(TAG, "Unhandled message in onConnectionStateChange()");
+                    Log.w(TAG, "Unhandled message in onConnectionStateChange()");
                     super.onConnectionStateChange(gatt, status, newState);
                     break;
             }
@@ -411,7 +411,7 @@ public class BLEService extends Service {
                 });
             }
             else {
-                Log.d(TAG, "Unhandled status in onServicesDiscovered(): " + status);
+                Log.w(TAG, "Unhandled status in onServicesDiscovered(): " + status);
             }
         }
 
@@ -458,7 +458,7 @@ public class BLEService extends Service {
                 Log.w(TAG, "unhandled notification in onCharacteristicRead()");
             }
             else {
-                Log.d(TAG, "Unhandled status in onCharacteristicRead(): " + status);
+                Log.w(TAG, "Unhandled status in onCharacteristicRead(): " + status);
             }
 
             if (CharFIFO.size() != 0) {
