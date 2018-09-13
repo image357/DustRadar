@@ -1,13 +1,13 @@
 package edu.teco.dustradar.sensorthings.entities;
 
-public class Datastream extends Entity {
+public class Location extends Entity {
 
     // constructors
 
-    public Datastream() {
+    public Location() {
     }
 
-    public Datastream(String id) {
+    public Location(String id) {
         super(id);
     }
 }

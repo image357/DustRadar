@@ -1,12 +1,9 @@
 package edu.teco.dustradar.sensorthings.entities;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
-public class Thing {
+public class Thing extends Entity {
 
     // private members
 
@@ -14,10 +11,18 @@ public class Thing {
     private String description = null;
     private Object properties = null;
 
+    private Collection<Location> Locations = null;
+    private Collection<HistoricalLocation> HistoricalLocations = null;
+    private Collection<Datastream> Datastreams = null;
+
 
     // constructors
 
     public  Thing() {
+    }
+
+    public Thing(String id) {
+        super(id);
     }
 
 
@@ -49,4 +54,54 @@ public class Thing {
         properties = arg;
     }
 
+
+    public Collection<Location> getLocations() {
+        return Locations;
+    }
+
+    public void setLocations(Collection<Location> arg) {
+        Locations = arg;
+    }
+
+    public void linkLocation(String id) {
+        if (Locations == null) {
+            Locations = new ArrayList<>();
+        }
+
+        Locations.add(new Location(id));
+    }
+
+
+    public Collection<HistoricalLocation> getHistoricalLocations() {
+        return HistoricalLocations;
+    }
+
+    public void setHistoricalLocations(Collection<HistoricalLocation> arg) {
+        HistoricalLocations = arg;
+    }
+
+    public void linkHistoricalLocation(String id) {
+        if (HistoricalLocations == null) {
+            HistoricalLocations = new ArrayList<>();
+        }
+
+        HistoricalLocations.add(new HistoricalLocation(id));
+    }
+
+
+    public Collection<Datastream> getDatastreams() {
+        return Datastreams;
+    }
+
+    public void setDatastreams(Collection<Datastream> arg) {
+        Datastreams = arg;
+    }
+
+    public void linkDatastream(String id) {
+        if (Datastreams == null) {
+            Datastreams = new ArrayList<>();
+        }
+
+        Datastreams.add(new Datastream(id));
+    }
 }
