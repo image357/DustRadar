@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities.helper;
+package edu.teco.dustradar.sensorthings.entities.date;
 
 import android.util.Log;
 
@@ -92,16 +92,15 @@ public class ISODateElement extends ISODate implements Serializable {
     }
 
     public void setEnd(ISODate end) {
-        if (end == null) {
-            setEnd(0);
-        }
-        else {
-            setEnd(end.getTime());
-        }
+        this.end = end;
     }
 
 
     public String getISOString() {
+        if (getStart() == 0) {
+            throw new UnsupportedOperationException("invalid date");
+        }
+
         if (getEnd() == 0) {
             return super.getISOString();
         }
@@ -112,7 +111,7 @@ public class ISODateElement extends ISODate implements Serializable {
 
     public List<ISODate> getPeriod() {
         if (getStart() == 0 || getEnd() == 0) {
-            Log.w(TAG, "ISODateElement is missing either start or end");
+            Log.w(TAG, "ISODateElement is missing either start or end date");
             return null;
         }
 
@@ -123,14 +122,13 @@ public class ISODateElement extends ISODate implements Serializable {
         return list;
     }
 
-    public void setPeriod(ISODate start, ISODate end) {
-        if (start == null) {
-            super.setTime(0);
-        }
-        else {
-            super.setTime(start.getTime());
-        }
+    public void setPeriod(long start, long end) {
+        setStart(start);
+        setEnd(end);
+    }
 
-        this.end = end;
+    public void setPeriod(ISODate start, ISODate end) {
+        setStart(start);
+        setEnd(end);
     }
 }

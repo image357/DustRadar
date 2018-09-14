@@ -19,10 +19,6 @@ abstract public class Entity {
         this.id = id;
     }
 
-    protected Entity(Entity old) {
-        this.id = new String(old.getId());
-    }
-
 
     // public methods
 

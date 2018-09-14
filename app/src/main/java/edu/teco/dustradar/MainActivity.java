@@ -21,11 +21,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.VideoView;
 
-import com.google.gson.Gson;
-
 import edu.teco.dustradar.blebridge.BLEBridge;
-import edu.teco.dustradar.sensorthings.entities.Datastream;
-import edu.teco.dustradar.sensorthings.entities.helper.ISODatePeriod;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -48,14 +44,6 @@ public class MainActivity extends AppCompatActivity {
         mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.getCurrentItem();
-
-        Gson gson = new Gson();
-        Datastream d = new Datastream("test");
-
-        d.setPhenomenonTime(new ISODatePeriod());
-
-        String json = gson.toJson(d);
-        Log.d(TAG, "json: " + json);
     }
 
 

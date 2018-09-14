@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities.helper;
+package edu.teco.dustradar.sensorthings.entities.date;
 
 import java.io.Serializable;
 import java.util.List;
@@ -14,12 +14,12 @@ public class ISODatePeriod extends ISODateElement implements Serializable {
 
     public ISODatePeriod(long millisec) {
         super(millisec);
-        super.setEnd(super.getStart());
+        super.setEnd(millisec);
     }
 
     public ISODatePeriod(ISODate time) {
         super(time);
-        super.setEnd(super.getStart());
+        super.setEnd(time);
     }
 
     public ISODatePeriod(ISODate start, ISODate end) {
@@ -40,8 +40,8 @@ public class ISODatePeriod extends ISODateElement implements Serializable {
 
     @Override
     public void setTime(long millisec) {
-        super.setTime(millisec);
-        super.setEnd(super.getStart());
+        super.setStart(millisec);
+        super.setEnd(millisec);
     }
 
 

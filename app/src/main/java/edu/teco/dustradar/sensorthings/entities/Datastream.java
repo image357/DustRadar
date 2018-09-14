@@ -1,8 +1,8 @@
 package edu.teco.dustradar.sensorthings.entities;
 
+import edu.teco.dustradar.sensorthings.entities.date.ISODate;
+import edu.teco.dustradar.sensorthings.entities.date.ISODatePeriod;
 import edu.teco.dustradar.sensorthings.entities.geojson.GeoPolygon;
-import edu.teco.dustradar.sensorthings.entities.helper.ISODate;
-import edu.teco.dustradar.sensorthings.entities.helper.ISODatePeriod;
 import edu.teco.dustradar.sensorthings.entities.helper.UnitOfMeasurement;
 
 public class Datastream extends Entity {
