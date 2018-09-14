@@ -11,6 +11,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import edu.teco.dustradar.gps.GPSService;
+import edu.teco.dustradar.sensorthings.entities.helper.ISODate;
 
 public class DataObject implements Serializable {
 

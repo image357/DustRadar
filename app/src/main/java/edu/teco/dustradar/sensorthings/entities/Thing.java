@@ -1,7 +1,7 @@
 package edu.teco.dustradar.sensorthings.entities;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 public class Thing extends Entity {
 
@@ -11,9 +11,9 @@ public class Thing extends Entity {
     private String description = null;
     private Object properties = null;
 
-    private Collection<Location> Locations = null;
-    private Collection<HistoricalLocation> HistoricalLocations = null;
-    private Collection<Datastream> Datastreams = null;
+    private List<Location> Locations = null;
+    private List<HistoricalLocation> HistoricalLocations = null;
+    private List<Datastream> Datastreams = null;
 
 
     // constructors
@@ -55,53 +55,65 @@ public class Thing extends Entity {
     }
 
 
-    public Collection<Location> getLocations() {
+    public List<Location> getLocations() {
         return Locations;
     }
 
-    public void setLocations(Collection<Location> arg) {
+    public void setLocations(List<Location> arg) {
         Locations = arg;
     }
 
-    public void linkLocation(String id) {
+    public void insertLocation(Location arg) {
         if (Locations == null) {
             Locations = new ArrayList<>();
         }
 
-        Locations.add(new Location(id));
+        Locations.add(arg);
+    }
+
+    public void linkLocation(String id) {
+        insertLocation(new Location(id));
     }
 
 
-    public Collection<HistoricalLocation> getHistoricalLocations() {
+    public List<HistoricalLocation> getHistoricalLocations() {
         return HistoricalLocations;
     }
 
-    public void setHistoricalLocations(Collection<HistoricalLocation> arg) {
+    public void setHistoricalLocations(List<HistoricalLocation> arg) {
         HistoricalLocations = arg;
     }
 
-    public void linkHistoricalLocation(String id) {
+    public void insertHistrocialLocation(HistoricalLocation arg) {
         if (HistoricalLocations == null) {
             HistoricalLocations = new ArrayList<>();
         }
 
-        HistoricalLocations.add(new HistoricalLocation(id));
+        HistoricalLocations.add(arg);
+    }
+
+    public void linkHistoricalLocation(String id) {
+        insertHistrocialLocation(new HistoricalLocation(id));
     }
 
 
-    public Collection<Datastream> getDatastreams() {
+    public List<Datastream> getDatastreams() {
         return Datastreams;
     }
 
-    public void setDatastreams(Collection<Datastream> arg) {
+    public void setDatastreams(List<Datastream> arg) {
         Datastreams = arg;
     }
 
-    public void linkDatastream(String id) {
+    public void insertDatastream(Datastream arg) {
         if (Datastreams == null) {
             Datastreams = new ArrayList<>();
         }
 
-        Datastreams.add(new Datastream(id));
+        Datastreams.add(arg);
+    }
+
+    public void linkDatastream(String id) {
+        insertDatastream(new Datastream(id));
     }
 }

@@ -1,4 +1,4 @@
-package edu.teco.dustradar.data;
+package edu.teco.dustradar.sensorthings.entities.helper;
 
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -14,7 +14,6 @@ public class ISODate extends Date implements Serializable {
     public ISODate() {
         super();
     }
-
 
     public ISODate(long millisec) {
         super(millisec);

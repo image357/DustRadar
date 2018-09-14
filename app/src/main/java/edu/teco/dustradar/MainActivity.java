@@ -25,7 +25,7 @@ import edu.teco.dustradar.blebridge.BLEBridge;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = MainActivity.class.getName();
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private ViewPager mViewPager = null;
 
