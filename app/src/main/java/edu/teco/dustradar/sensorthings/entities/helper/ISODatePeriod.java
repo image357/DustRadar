@@ -31,23 +31,11 @@ public class ISODatePeriod extends ISODateElement implements Serializable {
 
     @Override
     public String getISOString() {
-        if (super.getStart() == null || super.getEnd() == null) {
-            throw new UnsupportedOperationException("ISODatePeriod must have start and end date");
+        if (super.getStart() == 0 || super.getEnd() == 0) {
+            throw new UnsupportedOperationException("ISODatePeriod must have valid start and end date");
         }
 
         return super.getISOString();
-    }
-
-
-    @Override
-    public ISODate getTime() {
-        throw new UnsupportedOperationException("Cannot use ISODatePeriod as time instance");
-    }
-
-    @Override
-    public void setTime(ISODate time) {
-        super.setStart(time);
-        super.setEnd(super.getStart());
     }
 
     @Override
@@ -59,8 +47,8 @@ public class ISODatePeriod extends ISODateElement implements Serializable {
 
     @Override
     public List<ISODate> getPeriod() {
-        if (super.getStart() == null || super.getEnd() == null) {
-            throw new UnsupportedOperationException("ISODatePeriod must have start and end date");
+        if (super.getStart() == 0 || super.getEnd() == 0) {
+            throw new UnsupportedOperationException("ISODatePeriod must have valid start and end date");
         }
 
         return super.getPeriod();

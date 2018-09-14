@@ -6,120 +6,131 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ISODateElement implements Serializable {
+public class ISODateElement extends ISODate implements Serializable {
 
     private static final String TAG = ISODateElement.class.getSimpleName();
 
     // private members
 
-    private ISODate start = null;
     private ISODate end = null;
 
 
     // constructors
 
     public ISODateElement() {
-        this.start = new ISODate();
+        super();
     }
 
     public ISODateElement(long millisec) {
-        this.start = new ISODate(millisec);
+        super(millisec);
+    }
+
+    public ISODateElement(long start, long end) {
+        super(start);
+        this.end = new ISODate(end);
     }
 
     public ISODateElement(ISODate time) {
-        this.start = time;
+        super();
+
+        if (time == null) {
+            super.setTime(0);
+        }
+        else {
+            super.setTime(time.getTime());
+        }
     }
 
     public ISODateElement(ISODate start, ISODate end) {
-        this.start = start;
+        super();
+
+        if (start == null) {
+            super.setTime(0);
+        }
+        else {
+            super.setTime(start.getTime());
+        }
+
         this.end = end;
     }
 
 
     // public methods
 
-    public ISODate getStart() {
-        return start;
+    public long getStart() {
+        return super.getTime();
+    }
+
+    public void setStart(long millisec) {
+        super.setTime(millisec);
     }
 
     public void setStart(ISODate start) {
-        this.start = start;
+        if (start == null) {
+            setStart(0);
+        }
+        else {
+            setStart(start.getTime());
+        }
     }
 
 
-    public ISODate getEnd() {
-        return end;
+    public long getEnd() {
+        if (this.end == null) {
+            return 0;
+        }
+
+        return this.end.getTime();
+    }
+
+    public void setEnd(long millisec) {
+        if (this.end == null) {
+            this.end = new ISODate(0);
+        }
+
+        this.end.setTime(millisec);
     }
 
     public void setEnd(ISODate end) {
-        this.end = end;
+        if (end == null) {
+            setEnd(0);
+        }
+        else {
+            setEnd(end.getTime());
+        }
     }
 
 
     public String getISOString() {
-        if (start == null && end == null) {
-            throw new UnsupportedOperationException("ISODateElement must contain at least one ISODate");
+        if (getEnd() == 0) {
+            return super.getISOString();
         }
 
-        String startString = null;
-        if (start != null) {
-            startString = start.getISOString();
-        }
-
-        String endString = null;
-        if (end != null) {
-            endString = end.getISOString();
-        }
-
-        if (start == null) {
-            return endString;
-        }
-
-        if (end == null) {
-            return startString;
-        }
-
-        return (startString + "/" + endString);
-    }
-
-
-    public ISODate getTime() {
-        if (end != null) {
-            Log.w(TAG, "ISODateElement has end date");
-        }
-
-        return start;
-    }
-
-    public void setTime(ISODate time) {
-        if (end != null) {
-            Log.w(TAG, "ISODateElement has end date");
-        }
-
-        start = time;
-        end = null;
-    }
-
-    public void setTime(long millisec) {
-        setTime(new ISODate(millisec));
+        return (super.getISOString() + "/" + end.getISOString());
     }
 
 
     public List<ISODate> getPeriod() {
-        if (start == null || end == null) {
+        if (getStart() == 0 || getEnd() == 0) {
             Log.w(TAG, "ISODateElement is missing either start or end");
             return null;
         }
 
         List<ISODate> list = new ArrayList<>();
-        list.add(start);
+        list.add(this);
         list.add(end);
 
         return list;
     }
 
     public void setPeriod(ISODate start, ISODate end) {
-        this.start = start;
+        if (start == null) {
+            super.setTime(0);
+        }
+        else {
+            super.setTime(start.getTime());
+        }
+
         this.end = end;
     }
 }
