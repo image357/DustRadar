@@ -1,18 +1,20 @@
 package edu.teco.dustradar.sensorthings.entities.date;
 
-import android.util.Log;
-import android.util.Pair;
-
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
-public class ISODateElement extends ISODate implements Serializable {
+public class ISODateElement extends Date implements Serializable {
 
     private static final String TAG = ISODateElement.class.getSimpleName();
 
     // private members
 
-    private ISODate end = null;
+    private Date end = null;
 
 
     // constructors
@@ -27,28 +29,22 @@ public class ISODateElement extends ISODate implements Serializable {
 
     public ISODateElement(long start, long end) {
         super(start);
-        this.end = new ISODate(end);
+        this.end = new Date(end);
     }
 
-    public ISODateElement(ISODate time) {
+    public ISODateElement(ISODateElement time) {
         super(0);
+        this.end = new Date(0);
 
-        if (time != null) {
-            super.setTime(time.getTime());
-        }
+        setTime(time);
     }
 
-    public ISODateElement(ISODate start, ISODate end) {
+    public ISODateElement(ISODateElement start, ISODateElement end) {
         super(0);
-        end = new ISODate(0);
+        this.end = new Date(0);
 
-        if (start != null) {
-            super.setTime(start.getTime());
-        }
-
-        if (end != null) {
-            this.end.setTime(end.getTime());
-        }
+        setStart(start);
+        setEnd(end);
     }
 
 
@@ -62,13 +58,13 @@ public class ISODateElement extends ISODate implements Serializable {
         super.setTime(millisec);
     }
 
-    public void setStart(ISODate start) {
+    public void setStart(ISODateElement start) {
         if (start == null) {
             setStart(0);
+            return;
         }
-        else {
-            setStart(start.getTime());
-        }
+
+        setStart(start.getStart());
     }
 
 
@@ -82,70 +78,82 @@ public class ISODateElement extends ISODate implements Serializable {
 
     public void setEnd(long millisec) {
         if (this.end == null) {
-            this.end = new ISODate(0);
+            this.end = new Date(0);
         }
 
         this.end.setTime(millisec);
     }
 
-    public void setEnd(ISODate end) {
-        this.end = new ISODate(0);
-
-        if (end != null) {
-            this.end.setTime(end.getTime());
+    public void setEnd(ISODateElement end) {
+        if (end == null) {
+            setEnd(0);
+            return;
         }
+
+        long millisec = end.getEnd();
+        if (millisec == 0) {
+            setEnd(end.getStart());
+            return;
+        }
+
+        setEnd(millisec);
     }
 
 
-    @Override
+    public void setTime(ISODateElement time) {
+        if (time == null) {
+            setStart(0);
+            setEnd(0);
+        }
+        else {
+            setStart(time.getStart());
+            setEnd(time.getEnd());
+        }
+    }
+
+    public void setTime(long start, long end) {
+        setStart(start);
+        setEnd(end);
+    }
+
+    public void setTime(ISODateElement start, ISODateElement end) {
+        setStart(start);
+        setEnd(end);
+    }
+
+
     public String getISOString() {
         if (getStart() == 0) {
             throw new UnsupportedOperationException("invalid date");
         }
 
         if (getEnd() == 0) {
-            return super.getISOString();
+            return getISOString(this);
         }
 
-        return (super.getISOString() + "/" + end.getISOString());
-    }
-
-
-    public Pair<ISODate, ISODate> getPeriod() {
-        if (getStart() == 0 || getEnd() == 0) {
-            Log.w(TAG, "ISODateElement is missing either start or end date");
-            return null;
-        }
-
-        ISODate first = new ISODate(getStart());
-        ISODate second = new ISODate(getEnd());
-
-        Pair<ISODate, ISODate> pair = new Pair<>(first, second);
-        return pair;
-    }
-
-    public void setPeriod(long start, long end) {
-        setStart(start);
-        setEnd(end);
-    }
-
-    public void setPeriod(ISODate start, ISODate end) {
-        setStart(start);
-        setEnd(end);
-    }
-
-    public void setPeriod(Pair<ISODate, ISODate> pair) {
-        setStart(pair.first);
-        setEnd(pair.second);
+        return (getISOString(this) + "/" + getISOString(end));
     }
 
 
     // static methods
 
+    public static long millisecFromString(String string) throws ParseException {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        Date date = dateFormat.parse(string);
+
+        if (date == null) {
+            return 0;
+        }
+
+        return date.getTime();
+    }
+
     public static ISODateElement fromString(String string) throws ParseException {
         if (!string.contains("/")) {
-            ISODate date = ISODate.fromString(string);
-            return (new ISODateElement(date));
+            long millisec = millisecFromString(string);
+            return (new ISODateElement(millisec));
         }
 
         String[] parts = string.split("/");
@@ -153,9 +161,19 @@ public class ISODateElement extends ISODate implements Serializable {
             throw new ParseException("String has wrong number of seperators", parts.length);
         }
 
-        ISODate date1 = ISODate.fromString(parts[0]);
-        ISODate date2 = ISODate.fromString(parts[1]);
-        return (new ISODateElement(date1, date2));
+        long millisec1 = millisecFromString(parts[0]);
+        long millisec2 = millisecFromString(parts[1]);
+        return (new ISODateElement(millisec1, millisec2));
+    }
+
+
+    // protected methods
+
+    protected String getISOString(Date date) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        return dateFormat.format(date);
     }
 
 }

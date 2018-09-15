@@ -11,7 +11,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import edu.teco.dustradar.gps.GPSService;
-import edu.teco.dustradar.sensorthings.entities.date.ISODate;
+import edu.teco.dustradar.sensorthings.entities.date.ISODateInstance;
 
 public class DataObject implements Serializable {
 
@@ -19,7 +19,7 @@ public class DataObject implements Serializable {
 
     // private members
 
-    private ISODate time;
+    private ISODateInstance time;
     private double latitude;
     private double longitude;
     private double height;
@@ -33,7 +33,7 @@ public class DataObject implements Serializable {
     public DataObject(String inData) {
         isvalid = true;
 
-        time = new ISODate();
+        time = new ISODateInstance();
 
         Location location = GPSService.getLocation();
         if (location != null) {
@@ -78,7 +78,7 @@ public class DataObject implements Serializable {
     }
 
 
-    public ISODate getTime() {
+    public ISODateInstance getTime() {
         return time;
     }
 

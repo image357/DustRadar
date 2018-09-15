@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.teco.dustradar.sensorthings.entities.date.ISODate;
+import edu.teco.dustradar.sensorthings.entities.date.ISODateInstance;
 import edu.teco.dustradar.sensorthings.entities.date.ISODatePeriod;
 import edu.teco.dustradar.sensorthings.entities.geojson.GeoPolygon;
 import edu.teco.dustradar.sensorthings.entities.helper.UnitOfMeasurement;
@@ -128,7 +128,7 @@ public class Datastream extends Entity implements Serializable {
         this.phenomenonTime = period.getISOString();
     }
 
-    public void setPhenomenonTime(ISODate start, ISODate end) {
+    public void setPhenomenonTime(ISODateInstance start, ISODateInstance end) {
         this.phenomenonTime = (new ISODatePeriod(start, end)).getISOString();
     }
 
@@ -145,7 +145,7 @@ public class Datastream extends Entity implements Serializable {
         this.resultTime = period.getISOString();
     }
 
-    public void setResultTime(ISODate start, ISODate end) {
+    public void setResultTime(ISODateInstance start, ISODateInstance end) {
         this.resultTime = (new ISODatePeriod(start, end)).getISOString();
     }
 

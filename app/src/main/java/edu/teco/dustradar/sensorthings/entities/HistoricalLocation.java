@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.teco.dustradar.sensorthings.entities.date.ISODate;
+import edu.teco.dustradar.sensorthings.entities.date.ISODateInstance;
 
 public class HistoricalLocation extends Entity implements Serializable {
 
@@ -51,7 +51,7 @@ public class HistoricalLocation extends Entity implements Serializable {
         this.time = time;
     }
 
-    public void setTime(ISODate time) {
+    public void setTime(ISODateInstance time) {
         this.time = time.getISOString();
     }
 

@@ -1,7 +1,5 @@
 package edu.teco.dustradar.sensorthings.entities.date;
 
-import android.util.Pair;
-
 import java.io.Serializable;
 import java.text.ParseException;
 
@@ -19,12 +17,15 @@ public class ISODatePeriod extends ISODateElement implements Serializable {
         super.setEnd(millisec);
     }
 
-    public ISODatePeriod(ISODate time) {
-        super(time);
-        super.setEnd(time);
+    public ISODatePeriod(long start, long end) {
+        super(start, end);
     }
 
-    public ISODatePeriod(ISODate start, ISODate end) {
+    public ISODatePeriod(ISODatePeriod time) {
+        super(time);
+    }
+
+    public ISODatePeriod(ISODateElement start, ISODateElement end) {
         super(start, end);
     }
 
@@ -40,22 +41,6 @@ public class ISODatePeriod extends ISODateElement implements Serializable {
         return super.getISOString();
     }
 
-    @Override
-    public void setTime(long millisec) {
-        super.setStart(millisec);
-        super.setEnd(millisec);
-    }
-
-
-    @Override
-    public Pair<ISODate, ISODate> getPeriod() {
-        if (super.getStart() == 0 || super.getEnd() == 0) {
-            throw new UnsupportedOperationException("ISODatePeriod must have valid start and end date");
-        }
-
-        return super.getPeriod();
-    }
-
 
     // static methods
 
@@ -69,8 +54,8 @@ public class ISODatePeriod extends ISODateElement implements Serializable {
             throw new ParseException("String has wrong number of seperators", parts.length);
         }
 
-        ISODate date1 = ISODate.fromString(parts[0]);
-        ISODate date2 = ISODate.fromString(parts[1]);
-        return (new ISODatePeriod(date1, date2));
+        long millisec1 = millisecFromString(parts[0]);
+        long millisec2 = millisecFromString(parts[1]);
+        return (new ISODatePeriod(millisec1, millisec2));
     }
 }
