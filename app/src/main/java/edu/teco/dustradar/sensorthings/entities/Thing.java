@@ -1,9 +1,10 @@
 package edu.teco.dustradar.sensorthings.entities;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Thing extends Entity {
+public class Thing extends Entity implements Serializable {
 
     // private members
 
@@ -21,6 +22,18 @@ public class Thing extends Entity {
     public  Thing() {
     }
 
+    public Thing(Thing old) {
+        super(old);
+
+        this.name = old.getName();
+        this.description = old.getDescription();
+
+        this.properties = deepCopy(old.getProperties());
+        this.Locations = (List<Location>) deepCopy(old.getLocations());
+        this.HistoricalLocations = (List<HistoricalLocation>) deepCopy(old.getHistoricalLocations());
+        this.Datastreams = (List<Datastream>) deepCopy(old.getDatastreams());
+    }
+
     public Thing(String id) {
         super(id);
     }
@@ -32,8 +45,8 @@ public class Thing extends Entity {
         return name;
     }
 
-    public void setName(String arg) {
-        name = arg;
+    public void setName(String name) {
+        this.name = name;
     }
 
 
@@ -41,8 +54,8 @@ public class Thing extends Entity {
         return description;
     }
 
-    public void setDescription(String arg) {
-        description = arg;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
 
@@ -50,8 +63,8 @@ public class Thing extends Entity {
         return properties;
     }
 
-    public void setProperties(Object arg) {
-        properties = arg;
+    public void setProperties(Object properties) {
+        this.properties = properties;
     }
 
 
@@ -59,16 +72,16 @@ public class Thing extends Entity {
         return Locations;
     }
 
-    public void setLocations(List<Location> arg) {
-        Locations = arg;
+    public void setLocations(List<Location> locations) {
+        this.Locations = locations;
     }
 
-    public void insertLocation(Location arg) {
+    public void insertLocation(Location location) {
         if (Locations == null) {
             Locations = new ArrayList<>();
         }
 
-        Locations.add(arg);
+        Locations.add(location);
     }
 
     public void linkLocation(String id) {
@@ -80,16 +93,16 @@ public class Thing extends Entity {
         return HistoricalLocations;
     }
 
-    public void setHistoricalLocations(List<HistoricalLocation> arg) {
-        HistoricalLocations = arg;
+    public void setHistoricalLocations(List<HistoricalLocation> historicalLocations) {
+        this.HistoricalLocations = historicalLocations;
     }
 
-    public void insertHistrocialLocation(HistoricalLocation arg) {
+    public void insertHistrocialLocation(HistoricalLocation historicalLocation) {
         if (HistoricalLocations == null) {
             HistoricalLocations = new ArrayList<>();
         }
 
-        HistoricalLocations.add(arg);
+        HistoricalLocations.add(historicalLocation);
     }
 
     public void linkHistoricalLocation(String id) {
@@ -101,16 +114,16 @@ public class Thing extends Entity {
         return Datastreams;
     }
 
-    public void setDatastreams(List<Datastream> arg) {
-        Datastreams = arg;
+    public void setDatastreams(List<Datastream> datastreams) {
+        this.Datastreams = datastreams;
     }
 
-    public void insertDatastream(Datastream arg) {
+    public void insertDatastream(Datastream datastream) {
         if (Datastreams == null) {
             Datastreams = new ArrayList<>();
         }
 
-        Datastreams.add(arg);
+        Datastreams.add(datastream);
     }
 
     public void linkDatastream(String id) {

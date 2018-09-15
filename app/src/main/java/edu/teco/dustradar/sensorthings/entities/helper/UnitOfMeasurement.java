@@ -1,6 +1,8 @@
 package edu.teco.dustradar.sensorthings.entities.helper;
 
-public class UnitOfMeasurement {
+import java.io.Serializable;
+
+public class UnitOfMeasurement implements Serializable {
 
     // private members
 
@@ -15,9 +17,9 @@ public class UnitOfMeasurement {
     }
 
     public UnitOfMeasurement(UnitOfMeasurement old) {
-        this.name = new String(old.getName());
-        this.symbol = new String(old.getSymbol());
-        this.definition = new String(old.getDefinition());
+        this.name = old.getName();
+        this.symbol = old.getSymbol();
+        this.definition = old.getDefinition();
     }
 
 

@@ -1,7 +1,9 @@
 package edu.teco.dustradar.sensorthings.entities.date;
 
+import android.util.Pair;
+
 import java.io.Serializable;
-import java.util.List;
+import java.text.ParseException;
 
 public class ISODatePeriod extends ISODateElement implements Serializable {
 
@@ -46,11 +48,29 @@ public class ISODatePeriod extends ISODateElement implements Serializable {
 
 
     @Override
-    public List<ISODate> getPeriod() {
+    public Pair<ISODate, ISODate> getPeriod() {
         if (super.getStart() == 0 || super.getEnd() == 0) {
             throw new UnsupportedOperationException("ISODatePeriod must have valid start and end date");
         }
 
         return super.getPeriod();
+    }
+
+
+    // static methods
+
+    public static ISODatePeriod fromString(String string) throws ParseException {
+        if (!string.contains("/")) {
+            throw new ParseException("String has wrong number of seperators", 0);
+        }
+
+        String[] parts = string.split("/");
+        if (parts.length != 2) {
+            throw new ParseException("String has wrong number of seperators", parts.length);
+        }
+
+        ISODate date1 = ISODate.fromString(parts[0]);
+        ISODate date2 = ISODate.fromString(parts[1]);
+        return (new ISODatePeriod(date1, date2));
     }
 }

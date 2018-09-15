@@ -1,10 +1,10 @@
 package edu.teco.dustradar.sensorthings.entities.date;
 
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.ParseException;
 
 public class ISODateElement extends ISODate implements Serializable {
 
@@ -31,27 +31,24 @@ public class ISODateElement extends ISODate implements Serializable {
     }
 
     public ISODateElement(ISODate time) {
-        super();
+        super(0);
 
-        if (time == null) {
-            super.setTime(0);
-        }
-        else {
+        if (time != null) {
             super.setTime(time.getTime());
         }
     }
 
     public ISODateElement(ISODate start, ISODate end) {
-        super();
+        super(0);
+        end = new ISODate(0);
 
-        if (start == null) {
-            super.setTime(0);
-        }
-        else {
+        if (start != null) {
             super.setTime(start.getTime());
         }
 
-        this.end = end;
+        if (end != null) {
+            this.end.setTime(end.getTime());
+        }
     }
 
 
@@ -92,10 +89,15 @@ public class ISODateElement extends ISODate implements Serializable {
     }
 
     public void setEnd(ISODate end) {
-        this.end = end;
+        this.end = new ISODate(0);
+
+        if (end != null) {
+            this.end.setTime(end.getTime());
+        }
     }
 
 
+    @Override
     public String getISOString() {
         if (getStart() == 0) {
             throw new UnsupportedOperationException("invalid date");
@@ -109,17 +111,17 @@ public class ISODateElement extends ISODate implements Serializable {
     }
 
 
-    public List<ISODate> getPeriod() {
+    public Pair<ISODate, ISODate> getPeriod() {
         if (getStart() == 0 || getEnd() == 0) {
             Log.w(TAG, "ISODateElement is missing either start or end date");
             return null;
         }
 
-        List<ISODate> list = new ArrayList<>();
-        list.add(this);
-        list.add(end);
+        ISODate first = new ISODate(getStart());
+        ISODate second = new ISODate(getEnd());
 
-        return list;
+        Pair<ISODate, ISODate> pair = new Pair<>(first, second);
+        return pair;
     }
 
     public void setPeriod(long start, long end) {
@@ -131,4 +133,29 @@ public class ISODateElement extends ISODate implements Serializable {
         setStart(start);
         setEnd(end);
     }
+
+    public void setPeriod(Pair<ISODate, ISODate> pair) {
+        setStart(pair.first);
+        setEnd(pair.second);
+    }
+
+
+    // static methods
+
+    public static ISODateElement fromString(String string) throws ParseException {
+        if (!string.contains("/")) {
+            ISODate date = ISODate.fromString(string);
+            return (new ISODateElement(date));
+        }
+
+        String[] parts = string.split("/");
+        if (parts.length != 2) {
+            throw new ParseException("String has wrong number of seperators", parts.length);
+        }
+
+        ISODate date1 = ISODate.fromString(parts[0]);
+        ISODate date2 = ISODate.fromString(parts[1]);
+        return (new ISODateElement(date1, date2));
+    }
+
 }

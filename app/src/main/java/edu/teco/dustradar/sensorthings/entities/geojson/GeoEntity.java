@@ -1,9 +1,13 @@
 package edu.teco.dustradar.sensorthings.entities.geojson;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-abstract public class GeoEntity {
+abstract public class GeoEntity implements Serializable {
 
     // private members
 
@@ -15,6 +19,11 @@ abstract public class GeoEntity {
 
     protected GeoEntity(String type) {
         this.type = type;
+    }
+
+    protected GeoEntity(GeoEntity old) {
+        this.type = old.getType();
+        this.coordinates = (List) deepCopy(old.getCoordinates());
     }
 
 
@@ -34,6 +43,12 @@ abstract public class GeoEntity {
     }
 
 
+    public String toJson() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
+    }
+
+
     // protected methods
 
     protected void insertCoordinate(Object element) {
@@ -42,5 +57,18 @@ abstract public class GeoEntity {
         }
 
         coordinates.add(element);
+    }
+
+
+    protected Object deepCopy(Object old) {
+        if (old == null) {
+            return  null;
+        }
+
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.serializeNulls();
+        Gson gson = gsonBuilder.create();
+
+        return gson.fromJson(gson.toJson(old), old.getClass());
     }
 }
