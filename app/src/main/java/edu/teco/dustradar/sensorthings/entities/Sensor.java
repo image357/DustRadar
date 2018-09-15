@@ -1,8 +1,8 @@
 package edu.teco.dustradar.sensorthings.entities;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Sensor extends Entity implements Serializable {
 
@@ -13,8 +13,7 @@ public class Sensor extends Entity implements Serializable {
     private String encodingType = null;
     private Object metadata = null;
 
-    @SerializedName("Datastream")
-    private Datastream datastream;
+    private List<Datastream> Datastreams = null;
 
 
     // constructors
@@ -30,9 +29,7 @@ public class Sensor extends Entity implements Serializable {
         this.encodingType = old.getEncodingType();
         this.metadata = deepCopy(old.getMetadata());
 
-        if (old.getDatastream() != null) {
-            this.datastream = new Datastream(old.getDatastream());
-        }
+        this.Datastreams = (List<Datastream>) deepCopy(old.getDatastreams());
     }
 
     public Sensor(String id) {
@@ -79,16 +76,20 @@ public class Sensor extends Entity implements Serializable {
     }
 
 
-    public Datastream getDatastream() {
-        return datastream;
+    public List<Datastream> getDatastreams() {
+        return Datastreams;
     }
 
-    public void setDatastream(Datastream datastream) {
-        this.datastream = datastream;
+    public void setDatastreams(List<Datastream> datastreams) {
+        this.Datastreams = datastreams;
     }
 
     public void insertDatastream(Datastream datastream) {
-        setDatastream(datastream);
+        if (Datastreams == null) {
+            Datastreams = new ArrayList<>();
+        }
+
+        Datastreams.add(datastream);
     }
 
     public void linkDatastream(String id) {
