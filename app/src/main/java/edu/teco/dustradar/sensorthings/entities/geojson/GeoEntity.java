@@ -49,6 +49,24 @@ abstract public class GeoEntity implements Serializable {
     }
 
 
+    // static methods
+
+    public static List<Double> createPoint(double longitude, double latitude) {
+        List<Double> list = new ArrayList<>();
+        list.add(longitude);
+        list.add(latitude);
+
+        return list;
+    }
+
+    public static List<Double> createPoint(double longitude, double latitude, double height) {
+        List<Double> list = createPoint(longitude, latitude);
+        list.add(height);
+
+        return list;
+    }
+
+
     // protected methods
 
     protected void insertCoordinate(Object element) {
