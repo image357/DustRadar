@@ -25,6 +25,7 @@ import edu.teco.dustradar.bluetooth.BLEScan;
 import edu.teco.dustradar.bluetooth.BLEService;
 import edu.teco.dustradar.data.DataService;
 import edu.teco.dustradar.gps.GPSService;
+import edu.teco.dustradar.http.HTTPService;
 
 public class BLEBridge extends AppCompatActivity {
 
@@ -274,9 +275,15 @@ public class BLEBridge extends AppCompatActivity {
             DataService.stopService(this);
         }
 
+        if (HTTPService.isRunning(this)) {
+            Log.d(TAG, "Service is already running");
+            HTTPService.stopService(this);
+        }
+
         GPSService.startService(this);
         BLEService.startService(this, device);
         DataService.startService(this);
+        HTTPService.startService(this);
     }
 
 
@@ -284,6 +291,7 @@ public class BLEBridge extends AppCompatActivity {
         DataService.stopService(this);
         BLEService.stopService(this);
         GPSService.stopService(this);
+        HTTPService.stopService(this);
     }
 
 

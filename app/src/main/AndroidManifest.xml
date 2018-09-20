@@ -3,6 +3,8 @@
     package="edu.teco.dustradar">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -59,6 +61,9 @@
             android:name=".http.HTTPService"
             android:enabled="true"
             android:exported="false" />
+        <service
+            android:name=".http.HTTPIntent"
+            android:exported="false"></service>
     </application>
 
 </manifest>
