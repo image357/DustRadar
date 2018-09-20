@@ -29,6 +29,10 @@ public class GeoPoint extends GeoEntity implements Serializable {
     // public methods
 
     public void setPoint(List<Double> point) {
+        if (point.size() > 3) {
+            throw new IndexOutOfBoundsException("GeoPoint cannot have more than 3 coordinates");
+        }
+
         super.setCoordinates(point);
     }
 
