@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities.helper;
+package edu.teco.dustradar.sensorthings.helper;
 
 import java.io.Serializable;
 

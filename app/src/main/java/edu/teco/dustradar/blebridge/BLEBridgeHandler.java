@@ -18,7 +18,7 @@ import android.widget.TextView;
 import edu.teco.dustradar.R;
 import edu.teco.dustradar.bluetooth.BLEService;
 import edu.teco.dustradar.data.DataService;
-import edu.teco.dustradar.sensorthings.HTTPService;
+import edu.teco.dustradar.http.HTTPService;
 
 
 public class BLEBridgeHandler extends Fragment {

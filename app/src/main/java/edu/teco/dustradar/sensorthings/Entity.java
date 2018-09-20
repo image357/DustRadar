@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities;
+package edu.teco.dustradar.sensorthings;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

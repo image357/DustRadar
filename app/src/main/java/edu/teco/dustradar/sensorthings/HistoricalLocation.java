@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities;
+package edu.teco.dustradar.sensorthings;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.teco.dustradar.sensorthings.entities.date.ISODateInstance;
+import edu.teco.dustradar.sensorthings.date.ISODateInstance;
 
 public class HistoricalLocation extends Entity implements Serializable {
 

@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings;
+package edu.teco.dustradar.http;
 
 import android.app.ActivityManager;
 import android.app.Service;

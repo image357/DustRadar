@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities;
+package edu.teco.dustradar.sensorthings;
 
 import java.io.Serializable;
 import java.net.URI;

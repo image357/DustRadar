@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities;
+package edu.teco.dustradar.sensorthings;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -6,10 +6,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.teco.dustradar.sensorthings.entities.date.ISODateInstance;
-import edu.teco.dustradar.sensorthings.entities.date.ISODatePeriod;
-import edu.teco.dustradar.sensorthings.entities.geojson.GeoPolygon;
-import edu.teco.dustradar.sensorthings.entities.helper.UnitOfMeasurement;
+import edu.teco.dustradar.sensorthings.date.ISODateInstance;
+import edu.teco.dustradar.sensorthings.date.ISODatePeriod;
+import edu.teco.dustradar.sensorthings.geojson.GeoPolygon;
+import edu.teco.dustradar.sensorthings.helper.UnitOfMeasurement;
 
 public class Datastream extends Entity implements Serializable {
 

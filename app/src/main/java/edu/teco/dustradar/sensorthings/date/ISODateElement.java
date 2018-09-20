@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities.date;
+package edu.teco.dustradar.sensorthings.date;
 
 import java.io.Serializable;
 import java.text.DateFormat;

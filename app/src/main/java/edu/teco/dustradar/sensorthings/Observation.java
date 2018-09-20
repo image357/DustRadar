@@ -1,13 +1,13 @@
-package edu.teco.dustradar.sensorthings.entities;
+package edu.teco.dustradar.sensorthings;
 
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 import java.util.Map;
 
-import edu.teco.dustradar.sensorthings.entities.date.ISODateElement;
-import edu.teco.dustradar.sensorthings.entities.date.ISODateInstance;
-import edu.teco.dustradar.sensorthings.entities.date.ISODatePeriod;
+import edu.teco.dustradar.sensorthings.date.ISODateElement;
+import edu.teco.dustradar.sensorthings.date.ISODateInstance;
+import edu.teco.dustradar.sensorthings.date.ISODatePeriod;
 
 public class Observation extends Entity implements Serializable {
 

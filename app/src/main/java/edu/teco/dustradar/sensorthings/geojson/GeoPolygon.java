@@ -1,4 +1,4 @@
-package edu.teco.dustradar.sensorthings.entities.geojson;
+package edu.teco.dustradar.sensorthings.geojson;
 
 import java.io.Serializable;
 import java.util.List;
