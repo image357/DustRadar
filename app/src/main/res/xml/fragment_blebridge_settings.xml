@@ -2,17 +2,26 @@
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <EditTextPreference
+        android:key="@string/blebridge_pref_frosturl_key"
+        android:title="@string/blebridge_pref_frosturl_title"
+        android:defaultValue="@string/blebridge_pref_frosturl_default" />
+
+    <EditTextPreference
+        android:key="@string/blebridge_pref_thing_id_key"
+        android:title="@string/blebridge_pref_thing_id_title"
+        android:defaultValue="@string/blebridge_pref_thing_id_default" />
+
+    <EditTextPreference
+        android:key="@string/blebridge_pref_pm_datastream_id_key"
+        android:title="@string/blebridge_pref_pm_datastream_id_title"
+        android:defaultValue="@string/blebridge_pref_pm_datastream_id_default" />
+
     <CheckBoxPreference
         android:key="@string/blebridge_pref_default_key"
         android:title="@string/blebridge_pref_default_title"
         android:summary="@string/blebridge_pref_default_summary"
-        android:defaultValue="false" />
-
-    <EditTextPreference
-        android:key="@string/blebridge_pref_frosturl_key"
-        android:title="@string/blebridge_pref_frosturl_title"
-        android:summary="@string/blebridge_pref_frosturl_summary"
-        android:defaultValue="http://smartaqnet.teco.edu:8080/FROST-Server" />
+        android:defaultValue="@string/blebridge_pref_default_default" />
 
 
 </PreferenceScreen>

@@ -7,4 +7,16 @@
         android:orderInCategory="100"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_transmit"
+        android:orderInCategory="100"
+        android:title="@string/action_transmit"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_clear"
+        android:orderInCategory="100"
+        android:title="@string/action_clear"
+        app:showAsAction="never" />
 </menu>

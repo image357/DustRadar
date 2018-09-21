@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -12,6 +13,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
@@ -40,6 +42,9 @@ public class BLEBridge extends AppCompatActivity {
 
     private boolean shouldTimeout;
     private final int timeoutTime = 10000;
+
+    private long lastWarnConnection = 0;
+    private final long minLastWarnConnection = 4000;
 
 
     // request codes
@@ -83,6 +88,7 @@ public class BLEBridge extends AppCompatActivity {
         lastTimestamp = System.currentTimeMillis();
         makePermissionChecks();
         registerBLEReceiver();
+        registerHTTPReceiver();
         shouldTimeout = false;
     }
 
@@ -90,6 +96,7 @@ public class BLEBridge extends AppCompatActivity {
     @Override
     public void onPause() {
         unregisterBLEReceiver();
+        unregisterHTTPReceiver();
 
         super.onPause();
     }
@@ -160,6 +167,62 @@ public class BLEBridge extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.action_transmit) {
+            if (!DataService.isRunning(this)) {
+                DataService.startService(this);
+            }
+
+            if (!HTTPService.isRunning(this)) {
+                HTTPService.startService(this);
+            }
+
+            final Context context = this;
+
+            Handler handler = new Handler();
+            handler.postDelayed((new Runnable() {
+                @Override
+                public void run() {
+                    final Intent intent = new Intent(HTTPService.BROADCAST_START_TRANSMIT);
+                    context.sendBroadcast(intent);
+                }
+            }), 1000);
+
+            return true;
+        }
+
+        if (id == R.id.action_clear) {
+            final Activity activity = this;
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Clear Data");
+            builder.setMessage("Do you really want to clear all stored datapoints?");
+            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (!DataService.isRunning(activity)) {
+                        DataService.startService(activity);
+                    }
+
+                    Handler handler = new Handler();
+                    handler.postDelayed((new Runnable() {
+                        @Override
+                        public void run() {
+                            DataService.clear();
+                        }
+                    }), 1000);
+                }
+            });
+            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // pass
+                }
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -178,8 +241,6 @@ public class BLEBridge extends AppCompatActivity {
                 sharedPref.edit().clear().commit();
                 PreferenceManager.setDefaultValues(this, R.xml.fragment_blebridge_settings, true);
             }
-
-            // TODO: broadcast new preferences
             return;
         }
 
@@ -230,14 +291,38 @@ public class BLEBridge extends AppCompatActivity {
 
     // private methods
 
+    private void warnConnection() {
+        long currenttime = System.currentTimeMillis();
+        if ((currenttime - lastWarnConnection) < minLastWarnConnection) {
+            return;
+        }
+        lastWarnConnection = currenttime;
+
+        Toast.makeText(this, "Warning: Cannot transmit data!", Toast.LENGTH_SHORT).show();
+    }
+
+
     private void registerBLEReceiver() {
         registerReceiver(mBLEReceiver, BLEService.getIntentFilter());
     }
 
-
     private void unregisterBLEReceiver() {
         try {
             unregisterReceiver(mBLEReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void registerHTTPReceiver() {
+        registerReceiver(mHTTPReceiver, HTTPService.getIntentFilter());
+    }
+
+    private void unregisterHTTPReceiver() {
+        try {
+            unregisterReceiver(mHTTPReceiver);
         }
         catch (IllegalArgumentException e) {
             e.printStackTrace();
@@ -325,6 +410,20 @@ public class BLEBridge extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
                 stopServices();
                 finish();
+                return;
+            }
+        }
+    });
+
+
+    private final BroadcastReceiver mHTTPReceiver = (new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (HTTPService.BROADCAST_HTTP_TIMEOUT.equals(action)) {
+                warnConnection();
                 return;
             }
         }

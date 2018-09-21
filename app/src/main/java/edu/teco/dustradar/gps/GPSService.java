@@ -32,6 +32,7 @@ public class GPSService extends Service implements LocationListener {
 
     // broadcast actions
     public final static String BROADCAST_LOCATION_PROVIDER_DISABLED = "BROADCAST_LOCATION_PROVIDER_DISABLED";
+    public final static String BROADCAST_LOCATION_AVAILABLE = "BROADCAST_LOCATION_AVAILABLE";
 
     private final static List<String> allBroadcasts = Arrays.asList(
             BROADCAST_LOCATION_PROVIDER_DISABLED
@@ -148,6 +149,7 @@ public class GPSService extends Service implements LocationListener {
     public void onLocationChanged(Location location) {
         // TODO: make sophisticated location update
         mLocation = location;
+        broadcastUpdate(BROADCAST_LOCATION_AVAILABLE);
     }
 
     @Override

@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">DustRadar</string>
     <string name="action_settings">Settings</string>
+    <string name="action_transmit">Transmit Data</string>
+    <string name="action_clear">Clear Data</string>
 
     <string name="videotitle_text">Swipe left/right to continue</string>
 
@@ -22,13 +24,27 @@
     <string name="blebridge_button_connecting">Connecting</string>
     <string name="blebridge_switch_record">Recording</string>
     <string name="blebridge_switch_transmit">Transmitting</string>
-    <string name="stored_datapoints">Stored Datapoints:</string>
+    <string name="blebridge_ble_connection_status">BLE Status:</string>
+    <string name="blebridge_gps_connection_status">GPS Status:</string>
+    <string name="blebridge_stored_datapoints">Stored Datapoints:</string>
+    <string name="blebridge_last_data">Last Data:</string>
 
+    <!-- BLEBridge settings and metadata -->
     <string name="blebridge_pref_default_key">blebridge_pref_debug_key</string>
     <string name="blebridge_pref_default_title">Use default values</string>
     <string name="blebridge_pref_default_summary">This allows you to reset the settings.</string>
+    <string name="blebridge_pref_default_default">false</string>
+    
     <string name="blebridge_pref_frosturl_key">blebridge_pref_frosturl_key</string>
     <string name="blebridge_pref_frosturl_title">SensorThings Server URL</string>
-    <string name="blebridge_pref_frosturl_summary">This setting allows you to set the remote URL of the SensorThings server which stores your measurement data.</string>
+    <string name="blebridge_pref_frosturl_default">http://smartaqnet.teco.edu:8080/FROST-Server</string>
+    
+    <string name="blebridge_pref_thing_id_key">blebridge_pref_thingid_key</string>
+    <string name="blebridge_pref_thing_id_title">Thing ID</string>
+    <string name="blebridge_pref_thing_id_default">saqn:t:teco.edu:HMGU-Messwagen:2018:1</string>
+
+    <string name="blebridge_pref_pm_datastream_id_key">blebridge_pref_datastreamid_key</string>
+    <string name="blebridge_pref_pm_datastream_id_title">PM Datastream ID</string>
+    <string name="blebridge_pref_pm_datastream_id_default">saqn:d:teco.edu:SDS011:2018:5001-B7EE</string>
 
 </resources>

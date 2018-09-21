@@ -6,15 +6,22 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
+import edu.teco.dustradar.R;
+import edu.teco.dustradar.data.DataObject;
 import edu.teco.dustradar.data.DataService;
 
 public class HTTPService extends Service {
@@ -25,6 +32,15 @@ public class HTTPService extends Service {
     public final static String BROADCAST_START_TRANSMIT = "BROADCAST_START_TRANSMIT";
     public final static String BROADCAST_STOP_TRANSMIT = "BROADCAST_STOP_TRANSMIT";
     public final static String BROADCAST_HTTP_TIMEOUT = "BROADCAST_HTTP_TIMEOUT";
+
+    // actions
+    public final static String ACTION_POST_THING = "ACTION_POST_THING";
+    public final static String ACTION_POST_DATASTREAM = "ACTION_POST_DATASTREAM";
+    public final static String ACTION_POST_SENSOR = "ACTION_POST_SENSOR";
+    public final static String ACTION_POST_OBSERVEDPROPERTY = "ACTION_POST_OBSERVEDPROPERTY";
+    public final static String ACTION_POST_OBSERVATION = "ACTION_POST_OBSERVATION";
+    public final static String ACTION_POST_FEATUREOFINTEREST = "ACTION_POST_FEATUREOFINTEREST";
+    public final static String ACTION_POST_EVENT = "ACTION_POST_EVENT";
 
     private final static List<String> allBroadcasts = Arrays.asList(
             BROADCAST_START_TRANSMIT,
@@ -38,6 +54,8 @@ public class HTTPService extends Service {
     private PowerManager.WakeLock wakeLock;
     private boolean shouldTransmit;
     private Handler handler;
+
+    private HashMap<String, DataObject> transmitMap;
 
 
     // constructors
@@ -99,8 +117,10 @@ public class HTTPService extends Service {
 
         shouldTransmit = false;
         handler = new Handler();
+        transmitMap = new HashMap<>();
 
         registerReceiver(mTransmitReceiver, getIntentFilter());
+        registerReceiver(mHTTPIntentReceiver, HTTPIntent.getIntentFilter());
 
         Log.i(TAG, "HTTPService started");
         return START_REDELIVER_INTENT;
@@ -112,9 +132,28 @@ public class HTTPService extends Service {
         shouldTransmit = false;
         handler.removeCallbacks(transmitRunnable);
 
-        // close BroadcastReceiver
+        // refill unsubmitted data
+        Log.d(TAG, "transmitMap size: " + String.valueOf(transmitMap.size()));
+        if (! transmitMap.isEmpty()) {
+            Iterator it = transmitMap.entrySet().iterator();
+            while (it.hasNext()) {
+                HashMap.Entry<String, DataObject> pair = (HashMap.Entry) it.next();
+                DataService.add(pair.getValue());
+                it.remove();
+            }
+        }
+        transmitMap.clear();
+        transmitMap = null;
+
+        // close BroadcastReceivers
         try {
             unregisterReceiver(mTransmitReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        try {
+            unregisterReceiver(mHTTPIntentReceiver);
         }
         catch (IllegalArgumentException e) {
             e.printStackTrace();
@@ -174,11 +213,43 @@ public class HTTPService extends Service {
                 shouldTransmit = false;
                 return;
             }
+        }
+    });
 
-            if (BROADCAST_HTTP_TIMEOUT.equals(action)) {
-                Log.w(TAG, "Cannot establish connectivity");
-                // TODO: handle no connectivity notification
+    private final BroadcastReceiver mHTTPIntentReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (HTTPIntent.BROADCAST_HTTP_POST_FAILURE.equals(action)) {
+                String uuid = intent.getStringExtra(HTTPIntent.EXTRA_BROADCAST);
+                if (uuid == null) {
+                    return;
+                }
+
+                if (!transmitMap.containsKey(uuid)) {
+                    return;
+                }
+
+                DataObject data = transmitMap.remove(uuid);
+                DataService.add(data);
+
+                final Intent bIntent = new Intent(BROADCAST_HTTP_TIMEOUT);
+                sendBroadcast(bIntent);
                 return;
+            }
+
+            if (HTTPIntent.BROADCAST_HTTP_POST_SUCCESS.equals(action)) {
+                String uuid = intent.getStringExtra(HTTPIntent.EXTRA_BROADCAST);
+                if (uuid == null) {
+                    return;
+                }
+
+                if (!transmitMap.containsKey(uuid)) {
+                    return;
+                }
+
+                transmitMap.remove(uuid);
             }
         }
     });
@@ -190,9 +261,44 @@ public class HTTPService extends Service {
         @Override
         public void run() {
             if (shouldTransmit) {
-                // TODO: make actual data transmission
-                Log.i(TAG, "Transmitting data to SensorThings server");
-                HTTPIntent.Post(getApplicationContext(), null, "http://win10-koepke.teco.edu:8080/FROST-Server/v1.0/Things", "{\"name\": \"hi\", \"description\": \"test\"}");
+                DataObject data = null;
+                String uuid = null;
+                if (DataService.size() != 0) {
+                    data = DataService.poll();
+                    uuid = UUID.randomUUID().toString();
+                }
+
+                if (data != null && data.isValid()) {
+                    Log.i(TAG, "Transmitting data to SensorThings server");
+
+                    transmitMap.put(uuid, data);
+
+                    Context context = getApplicationContext();
+                    STGenerator stgen = new STGenerator(context, data);
+
+                    String key = getResources().getString(R.string.blebridge_pref_frosturl_key);
+                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                    String sturl = sharedPref.getString(key, null);
+
+                    HTTPIntent.Post(context, ACTION_POST_THING,
+                            sturl + "/v1.0/Things", stgen.getThing());
+                    HTTPIntent.Post(context, ACTION_POST_SENSOR,
+                            sturl + "/v1.0/Sensors", stgen.getSensor_SDS011());
+                    HTTPIntent.Post(context, ACTION_POST_OBSERVEDPROPERTY,
+                            sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_PM10());
+                    HTTPIntent.Post(context, ACTION_POST_OBSERVEDPROPERTY,
+                            sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_PM25());
+
+                    HTTPIntent.Post(context, ACTION_POST_DATASTREAM,
+                            sturl + "/v1.0/Datastreams", stgen.getDatastream_PM10());
+                    HTTPIntent.Post(context, ACTION_POST_DATASTREAM,
+                            sturl + "/v1.0/Datastreams", stgen.getDatastream_PM25());
+
+                    HTTPIntent.Post(context, uuid,
+                            sturl + "/v1.0/Observations", stgen.getEvent_PM10());
+                    HTTPIntent.Post(context, uuid,
+                            sturl + "/v1.0/Observations", stgen.getEvent_PM25());
+                }
 
                 long postDelay = 100;
                 if (DataService.size() == 0) {

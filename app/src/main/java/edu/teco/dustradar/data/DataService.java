@@ -226,6 +226,20 @@ public class DataService extends Service {
     }
 
 
+    public static void clear() {
+        if (queueFile == null) {
+            return;
+        }
+
+        try {
+            queueFile.clear();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public static IntentFilter getIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
 

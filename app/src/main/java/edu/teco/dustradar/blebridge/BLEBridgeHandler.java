@@ -18,6 +18,8 @@ import android.widget.TextView;
 import edu.teco.dustradar.R;
 import edu.teco.dustradar.bluetooth.BLEService;
 import edu.teco.dustradar.data.DataService;
+import edu.teco.dustradar.gps.GPSService;
+import edu.teco.dustradar.http.HTTPIntent;
 import edu.teco.dustradar.http.HTTPService;
 
 
@@ -27,9 +29,23 @@ public class BLEBridgeHandler extends Fragment {
 
     // private members
 
-    Switch recordingSwtich;
-    Switch transmittingSwitch;
-    TextView dataPoints;
+    private Switch recordingSwtich;
+    private Switch transmittingSwitch;
+
+    // view updates
+    private TextView tvBLEConnectionStatus;
+    private String bleConnectionStatus = "Connected";
+
+    private TextView tvGPSConnectionStatus;
+    private String gpsConnectionStatus = "Unavailable";
+
+    private TextView tvStoredDatapoints;
+
+    private TextView tvLastData;
+    private String lastData = null;
+
+    private long lastViewUpdate = 0;
+    private final long minLastViewUpdate = 500;
 
 
     // constructors
@@ -52,7 +68,10 @@ public class BLEBridgeHandler extends Fragment {
         transmittingSwitch = rootView.findViewById(R.id.switch_transmit);
         transmittingSwitch.setOnCheckedChangeListener(onTransmittingSwitchChange);
 
-        dataPoints = rootView.findViewById(R.id.textView_blebridge_datapoints);
+        tvBLEConnectionStatus = rootView.findViewById(R.id.textView_blebridge_ble_connection_status);
+        tvGPSConnectionStatus = rootView.findViewById(R.id.textView_blebridge_gps_connection_status);
+        tvStoredDatapoints = rootView.findViewById(R.id.textView_blebridge_datapoints);
+        tvLastData = rootView.findViewById(R.id.textView_blebridge_last_data);
 
         return rootView;
     }
@@ -101,14 +120,36 @@ public class BLEBridgeHandler extends Fragment {
     // private methods
 
     private void updateView() {
-        String temp = getResources().getString(R.string.stored_datapoints);
-        dataPoints.setText(temp + "   " + String.valueOf(DataService.size()));
+        long currenttime = System.currentTimeMillis();
+        if ((currenttime - lastViewUpdate) < minLastViewUpdate) {
+            return;
+        }
+        lastViewUpdate = currenttime;
+        String temp;
+
+        temp = getResources().getString(R.string.blebridge_ble_connection_status);
+        tvBLEConnectionStatus.setText(temp + "   " + bleConnectionStatus);
+
+        temp = getResources().getString(R.string.blebridge_gps_connection_status);
+        tvGPSConnectionStatus.setText(temp + "   " + gpsConnectionStatus);
+
+        temp = getResources().getString(R.string.blebridge_stored_datapoints);
+        tvStoredDatapoints.setText(temp + "   " + String.valueOf(DataService.size()));
+
+        temp = getResources().getString(R.string.blebridge_last_data);
+        tvLastData.setText(temp + "   " + lastData);
     }
+
 
     private void registerHandlerReceiver() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataService.BROADCAST_DATA_STORED);
         filter.addAction(BLEService.BROADCAST_BLE_DATA_AVAILABLE);
+        filter.addAction(BLEService.BROADCAST_GATT_CONNECTED);
+        filter.addAction(BLEService.BROADCAST_GATT_DISCONNECTED);
+        filter.addAction(GPSService.BROADCAST_LOCATION_AVAILABLE);
+        filter.addAction(HTTPService.BROADCAST_HTTP_TIMEOUT);
+        filter.addAction(HTTPIntent.BROADCAST_HTTP_POST_SUCCESS);
         getActivity().registerReceiver(mHandlerReceiver, filter);
     }
 
@@ -126,19 +167,47 @@ public class BLEBridgeHandler extends Fragment {
     // BroadcastReceivers
 
     private final BroadcastReceiver mHandlerReceiver = (new BroadcastReceiver() {
-        private final long minUpdateTime = 500;
-        private long lastDatapointsUpdate = 0;
 
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if(DataService.BROADCAST_DATA_STORED.equals(action)) {
-                long currenttime = System.currentTimeMillis();
-                if ((currenttime - lastDatapointsUpdate) > minUpdateTime) {
-                    updateView();
-                    lastDatapointsUpdate = currenttime;
-                }
+            if (DataService.BROADCAST_DATA_STORED.equals(action)) {
+                updateView();
+                return;
+            }
+
+            if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
+                lastData = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                updateView();
+                return;
+            }
+
+            if (BLEService.BROADCAST_GATT_CONNECTED.equals(action)) {
+                bleConnectionStatus = "Connected";
+                updateView();
+                return;
+            }
+
+            if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
+                bleConnectionStatus = "Disconnected";
+                updateView();
+                return;
+            }
+
+            if (GPSService.BROADCAST_LOCATION_AVAILABLE.equals(action)) {
+                gpsConnectionStatus = "Available";
+                updateView();
+                return;
+            }
+
+            if (HTTPIntent.BROADCAST_HTTP_POST_SUCCESS.equals(action)) {
+                updateView();
+                return;
+            }
+
+            if (HTTPService.BROADCAST_HTTP_TIMEOUT.equals(action)) {
+                updateView();
                 return;
             }
         }

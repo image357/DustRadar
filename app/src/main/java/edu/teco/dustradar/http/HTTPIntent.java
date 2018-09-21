@@ -28,10 +28,10 @@ public class HTTPIntent extends IntentService {
     private static final String ACTION_HTTP_GET_JSON = "edu.teco.dustradar.http.action.get.json";
 
     // parameters
-    private static final String EXTRA_URL = "edu.teco.dustradar.http.extra.url";
-    private static final String EXTRA_JSON = "edu.teco.dustradar.http.extra.json";
-    private static final String EXTRA_RESULT = "edu.teco.dustradar.http.extra.result";
-    private static final String EXTRA_BROADCAST = "edu.teco.dustradar.http.extra.broadcast";
+    public static final String EXTRA_URL = "edu.teco.dustradar.http.extra.url";
+    public static final String EXTRA_JSON = "edu.teco.dustradar.http.extra.json";
+    public static final String EXTRA_RESULT = "edu.teco.dustradar.http.extra.result";
+    public static final String EXTRA_BROADCAST = "edu.teco.dustradar.http.extra.broadcast";
 
     // broadcasts
     public final static String BROADCAST_HTTP_POST_SUCCESS = "BROADCAST_HTTP_POST_SUCCESS";
@@ -100,16 +100,18 @@ public class HTTPIntent extends IntentService {
     // action handlers
 
     private void handlePostJson(String broadcast, String url, String json) {
+        String result;
+        Intent intent;
         try {
             initHttp(url);
         }
         catch (Exception e) {
-            Log.e(TAG, "initHttp() failed");
-            final Intent intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
+            result = "Exception: initHttp()";
+            Log.e(TAG, result);
+
+            intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
             intent.putExtra(EXTRA_BROADCAST, broadcast);
-            intent.putExtra(EXTRA_URL, url);
-            intent.putExtra(EXTRA_JSON, json);
-            intent.putExtra(EXTRA_RESULT, "Exception: initHttp(): " + url);
+            intent.putExtra(EXTRA_RESULT, result);
             sendBroadcast(intent);
             return;
         }
@@ -135,46 +137,43 @@ public class HTTPIntent extends IntentService {
                     case 200:
                     case 201:
                         response = getHTTPResult(http.getInputStream());
-                        if(response != null) {
-                            final Intent intent = new Intent(BROADCAST_HTTP_POST_SUCCESS);
-                            intent.putExtra(EXTRA_URL, url);
-                            intent.putExtra(EXTRA_BROADCAST, broadcast);
-                            sendBroadcast(intent);
-                            Log.d(TAG, "POST url: " + url);
-                            Log.d(TAG, "HttpResponse: " + response);
-                        }
+                        result = "POST url success: " + url + "; Response: " + response;
+                        Log.i(TAG, result);
+
+                        intent = new Intent(BROADCAST_HTTP_POST_SUCCESS);
+                        intent.putExtra(EXTRA_BROADCAST, broadcast);
+                        sendBroadcast(intent);
                         break;
 
                     default:
                         response = getHTTPResult(http.getErrorStream());
-                        final Intent intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
+                        result = "POST url failure: " + url + "; Response code != 200: " + response;
+                        Log.w(TAG, result);
+
+                        intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
                         intent.putExtra(EXTRA_BROADCAST, broadcast);
-                        intent.putExtra(EXTRA_URL, url);
-                        intent.putExtra(EXTRA_JSON, json);
-                        intent.putExtra(EXTRA_RESULT, "Response code != 200: " + response);
+                        intent.putExtra(EXTRA_RESULT, result);
                         sendBroadcast(intent);
-                        Log.w(TAG, "Response code != 200: " + response);
                 }
             }
             catch (IOException e) {
-                Log.e(TAG, "IOException in POST");
-                final Intent intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
+                result = "IOException for url: " + url;
+                Log.e(TAG, result);
+
+                intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
                 intent.putExtra(EXTRA_BROADCAST, broadcast);
-                intent.putExtra(EXTRA_URL, url);
-                intent.putExtra(EXTRA_JSON, json);
-                intent.putExtra(EXTRA_RESULT, "IOException: " + url);
+                intent.putExtra(EXTRA_RESULT, result);
                 sendBroadcast(intent);
             }
         }
         catch (Exception e) {
-            Log.e(TAG, "Exception in POST");
-            final Intent intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
+            result = "Exception for url: " + url;
+            Log.e(TAG, result);
+
+            intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
             intent.putExtra(EXTRA_BROADCAST, broadcast);
-            intent.putExtra(EXTRA_URL, url);
-            intent.putExtra(EXTRA_JSON, json);
-            intent.putExtra(EXTRA_RESULT, "Exception: " + url);
+            intent.putExtra(EXTRA_RESULT, result);
             sendBroadcast(intent);
-            Log.d(TAG, "Exception: " + url);
         }
         finally {
             http.disconnect();
