@@ -41,10 +41,10 @@
     
     <string name="blebridge_pref_thing_id_key">blebridge_pref_thingid_key</string>
     <string name="blebridge_pref_thing_id_title">Thing ID</string>
-    <string name="blebridge_pref_thing_id_default">saqn:t:teco.edu:HMGU-Messwagen:2018:1</string>
+    <string name="blebridge_pref_thing_id_default">testthing</string>
 
     <string name="blebridge_pref_pm_datastream_id_key">blebridge_pref_datastreamid_key</string>
     <string name="blebridge_pref_pm_datastream_id_title">PM Datastream ID</string>
-    <string name="blebridge_pref_pm_datastream_id_default">saqn:d:teco.edu:SDS011:2018:5001-B7EE</string>
+    <string name="blebridge_pref_pm_datastream_id_default">testdatastream</string>
 
 </resources>
