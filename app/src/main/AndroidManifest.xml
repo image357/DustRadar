@@ -63,6 +63,10 @@
             android:exported="false" />
         <service
             android:name=".http.HTTPIntent"
+            android:exported="false" />
+        <service
+            android:name=".blebridge.KeepAliveManager"
+            android:enabled="true"
             android:exported="false"></service>
     </application>
 

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.teco.dustradar.blebridge.KeepAliveManager;
 import edu.teco.dustradar.bluetooth.BLEService;
 
 
@@ -113,7 +114,8 @@ public class DataService extends Service {
             Log.e(TAG, "Cannot create or access queueFile");
         }
 
-        registerReceiver(mBLEReceiver, BLEService.getIntentFilter());
+        registerKeepAliveReceiver();
+        registerBLEReceiver();
 
         Log.i(TAG, "DataService started");
         return START_REDELIVER_INTENT;
@@ -125,12 +127,8 @@ public class DataService extends Service {
         shouldRecord = false;
 
         // close BroadcastReceiver
-        try {
-            unregisterReceiver(mBLEReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
+        unregisterKeepAliveReceiver();
+        unregisterKeepAliveReceiver();
 
         // close QueueFile
         try {
@@ -300,4 +298,44 @@ public class DataService extends Service {
             }
         }
     });
+
+    private void registerBLEReceiver() {
+        registerReceiver(mBLEReceiver, BLEService.getIntentFilter());
+    }
+
+    private void unregisterBLEReceiver() {
+        try {
+            unregisterReceiver(mBLEReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (KeepAliveManager.BROADCAST_KEEP_ALIVE_PING.equals(action)) {
+                Intent reply = new Intent(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
+                sendBroadcast(reply);
+                return;
+            }
+        }
+    });
+
+    private void registerKeepAliveReceiver() {
+        registerReceiver(mKeepAliveReceiver, KeepAliveManager.getIntentFilter());
+    }
+
+    private void unregisterKeepAliveReceiver() {
+        try {
+            unregisterReceiver(mKeepAliveReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
 }

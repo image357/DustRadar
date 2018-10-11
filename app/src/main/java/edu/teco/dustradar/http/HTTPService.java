@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import edu.teco.dustradar.R;
+import edu.teco.dustradar.blebridge.KeepAliveManager;
 import edu.teco.dustradar.data.DataObject;
 import edu.teco.dustradar.data.DataService;
 
@@ -68,7 +69,7 @@ public class HTTPService extends Service {
 
     public static void startService(Context context) {
         if(context == null) {
-            throw new Resources.NotFoundException("Cannot start service without context or device");
+            throw new Resources.NotFoundException("Cannot start service without context");
         }
 
         if (isRunning(context)) {
@@ -119,8 +120,9 @@ public class HTTPService extends Service {
         handler = new Handler();
         transmitMap = new HashMap<>();
 
-        registerReceiver(mTransmitReceiver, getIntentFilter());
-        registerReceiver(mHTTPIntentReceiver, HTTPIntent.getIntentFilter());
+        registerTransmitReceiver();
+        registerHTTPIntentReceiver();
+        registerKeepAliveReceiver();
 
         Log.i(TAG, "HTTPService started");
         return START_REDELIVER_INTENT;
@@ -145,19 +147,9 @@ public class HTTPService extends Service {
         transmitMap.clear();
         transmitMap = null;
 
-        // close BroadcastReceivers
-        try {
-            unregisterReceiver(mTransmitReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-        try {
-            unregisterReceiver(mHTTPIntentReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
+        unregisterTransmitReceiver();
+        unregisterHTTPIntentReceiver();
+        unregisterKeepAliveReceiver();
 
         wakeLock.release();
         super.onDestroy();
@@ -216,6 +208,20 @@ public class HTTPService extends Service {
         }
     });
 
+    private void registerTransmitReceiver(){
+        registerReceiver(mTransmitReceiver, getIntentFilter());
+    }
+
+    private void unregisterTransmitReceiver() {
+        try {
+            unregisterReceiver(mTransmitReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private final BroadcastReceiver mHTTPIntentReceiver = (new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -253,6 +259,46 @@ public class HTTPService extends Service {
             }
         }
     });
+
+    private void registerHTTPIntentReceiver() {
+        registerReceiver(mHTTPIntentReceiver, HTTPIntent.getIntentFilter());
+    }
+
+    private void unregisterHTTPIntentReceiver() {
+        try {
+            unregisterReceiver(mHTTPIntentReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (KeepAliveManager.BROADCAST_KEEP_ALIVE_PING.equals(action)) {
+                Intent reply = new Intent(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
+                sendBroadcast(reply);
+                return;
+            }
+        }
+    });
+
+    private void registerKeepAliveReceiver() {
+        registerReceiver(mKeepAliveReceiver, KeepAliveManager.getIntentFilter());
+    }
+
+    private void unregisterKeepAliveReceiver() {
+        try {
+            unregisterReceiver(mKeepAliveReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     // transmission

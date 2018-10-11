@@ -14,6 +14,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -31,6 +32,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
+
+import edu.teco.dustradar.blebridge.KeepAliveManager;
 
 public class BLEService extends Service {
 
@@ -190,6 +193,8 @@ public class BLEService extends Service {
         shouldReconnect = true;
         mBluetoothGatt = mDevice.connectGatt(this, true, mGattCallback);
 
+        registerKeepAliveReceiver();
+
         Log.i(TAG, "BLEService started");
         return START_REDELIVER_INTENT;
     }
@@ -208,6 +213,8 @@ public class BLEService extends Service {
         MetadataService = null;
         MetadataChar = null;
         DataDescriptionChar = null;
+
+        unregisterKeepAliveReceiver();
 
         wakeLock.release();
         super.onDestroy();
@@ -468,5 +475,34 @@ public class BLEService extends Service {
             }
         }
     });
+
+
+    // BroadcastReceivers
+
+    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (KeepAliveManager.BROADCAST_KEEP_ALIVE_PING.equals(action)) {
+                Intent reply = new Intent(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
+                sendBroadcast(reply);
+                return;
+            }
+        }
+    });
+
+    private void registerKeepAliveReceiver() {
+        registerReceiver(mKeepAliveReceiver, KeepAliveManager.getIntentFilter());
+    }
+
+    private void unregisterKeepAliveReceiver() {
+        try {
+            unregisterReceiver(mKeepAliveReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
     
 }

@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -24,6 +25,8 @@ import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;
+
+import edu.teco.dustradar.blebridge.KeepAliveManager;
 
 
 public class GPSService extends Service implements LocationListener {
@@ -120,6 +123,8 @@ public class GPSService extends Service implements LocationListener {
             e.printStackTrace();
         }
 
+        registerKeepAliveReceiver();
+
         Log.i(TAG, "GPSService started");
         return START_REDELIVER_INTENT;
     }
@@ -130,6 +135,8 @@ public class GPSService extends Service implements LocationListener {
         Log.i(TAG, "GPSService destroyed");
         mManger.removeUpdates(this);
         mLocation = null;
+
+        unregisterKeepAliveReceiver();
 
         wakeLock.release();
         super.onDestroy();
@@ -255,6 +262,35 @@ public class GPSService extends Service implements LocationListener {
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
+    }
+
+
+    // BroadcastReceivers
+
+    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (KeepAliveManager.BROADCAST_KEEP_ALIVE_PING.equals(action)) {
+                Intent reply = new Intent(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
+                sendBroadcast(reply);
+                return;
+            }
+        }
+    });
+
+    private void registerKeepAliveReceiver() {
+        registerReceiver(mKeepAliveReceiver, KeepAliveManager.getIntentFilter());
+    }
+
+    private void unregisterKeepAliveReceiver() {
+        try {
+            unregisterReceiver(mKeepAliveReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
     }
 
 }
