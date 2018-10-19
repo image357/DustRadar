@@ -3,7 +3,6 @@ package edu.teco.dustradar.http;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
@@ -16,8 +15,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
 
 public class HTTPIntent extends IntentService {
 
@@ -36,11 +33,6 @@ public class HTTPIntent extends IntentService {
     // broadcasts
     public final static String BROADCAST_HTTP_POST_SUCCESS = "BROADCAST_HTTP_POST_SUCCESS";
     public final static String BROADCAST_HTTP_POST_FAILURE = "BROADCAST_HTTP_POST_FAILURE";
-
-    private final static List<String> allBroadcasts = Arrays.asList(
-            BROADCAST_HTTP_POST_SUCCESS,
-            BROADCAST_HTTP_POST_FAILURE
-    );
 
 
     // private members
@@ -184,19 +176,6 @@ public class HTTPIntent extends IntentService {
     private void handleGetJson(String broadcast, String url) {
         // TODO: Handle action
         throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-
-    // static methods
-
-    public static IntentFilter getIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-
-        for(String broadcast : allBroadcasts) {
-            intentFilter.addAction(broadcast);
-        }
-
-        return intentFilter;
     }
 
 

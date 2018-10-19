@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -33,8 +34,7 @@ public class BLEBridge extends AppCompatActivity {
 
     private static final String TAG = BLEBridge.class.getSimpleName();
 
-    // private methods
-
+    // private members
     private BLEScan bleScan;
 
     private Long lastTimestamp;
@@ -87,14 +87,8 @@ public class BLEBridge extends AppCompatActivity {
         Log.i(TAG, "BLEBridge: onResume()");
 
         lastTimestamp = System.currentTimeMillis();
-
         makePermissionChecks();
-
-        registerKeepAliveReceiver();
-        registerBLEReceiver();
-        registerHTTPReceiver();
-
-        shouldTimeout = false;
+        registerReceiver();
     }
 
 
@@ -102,8 +96,7 @@ public class BLEBridge extends AppCompatActivity {
     public void onPause() {
         Log.i(TAG, "BLEBridge: onPause()");
 
-        unregisterBLEReceiver();
-        unregisterHTTPReceiver();
+        unregisterReceiver();
 
         super.onPause();
     }
@@ -370,9 +363,9 @@ public class BLEBridge extends AppCompatActivity {
     }
 
 
-    // BroadcastReceivers
+    // BroadcastReceiver
 
-    private final BroadcastReceiver mBLEReceiver = (new BroadcastReceiver() {
+    private final BroadcastReceiver mReceiver = (new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
@@ -381,8 +374,10 @@ public class BLEBridge extends AppCompatActivity {
                 shouldTimeout = false;
 
                 // get metadata
-                BLEService.readMetadata();
-                BLEService.readDataDescription();
+                final Intent RMintent = new Intent(BLEService.BROADCAST_BLE_READ_METADATA);
+                sendBroadcast(RMintent);
+                final Intent RDintent = new Intent(BLEService.BROADCAST_BLE_READ_DATADESCRIPTION);
+                sendBroadcast(RDintent);
 
                 // start BLEBridgeHandler Fragment
                 BLEBridgeHandler handlerFragment = new BLEBridgeHandler();
@@ -402,70 +397,49 @@ public class BLEBridge extends AppCompatActivity {
                 finish();
                 return;
             }
-        }
-    });
-
-    private void registerBLEReceiver() {
-        registerReceiver(mBLEReceiver, BLEService.getIntentFilter());
-    }
-
-    private void unregisterBLEReceiver() {
-        try {
-            unregisterReceiver(mBLEReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private final BroadcastReceiver mHTTPReceiver = (new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
 
             if (HTTPService.BROADCAST_HTTP_TIMEOUT.equals(action)) {
                 warnConnection();
                 return;
             }
-        }
-    });
-
-    private void registerHTTPReceiver() {
-        registerReceiver(mHTTPReceiver, HTTPService.getIntentFilter());
-    }
-
-    private void unregisterHTTPReceiver() {
-        try {
-            unregisterReceiver(mHTTPReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
 
             if (KeepAliveManager.BROADCAST_KEEP_ALIVE_PING.equals(action)) {
                 Intent reply = new Intent(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
                 sendBroadcast(reply);
                 return;
             }
+
+            if (BLEService.BROADCAST_BLESERVICE_ERROR.equals(action)) {
+                // TODO: handle BLE error
+                return;
+            }
+
+            if (DataService.BROADCAST_DATASERVICE_ERROR.equals(action)) {
+                // TODO: handle data error
+                return;
+            }
         }
     });
 
-    private void registerKeepAliveReceiver() {
-        registerReceiver(mKeepAliveReceiver, KeepAliveManager.getIntentFilter());
+    private void registerReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_ERROR);
+        intentFilter.addAction(DataService.BROADCAST_DATASERVICE_ERROR);
+
+        intentFilter.addAction(BLEService.BROADCAST_FIRST_CONNECT);
+        intentFilter.addAction(BLEService.BROADCAST_MISSING_SERVICE);
+
+        intentFilter.addAction(HTTPService.BROADCAST_HTTP_TIMEOUT);
+
+        intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
+
+        registerReceiver(mReceiver, intentFilter);
     }
 
-    private void unregisterKeepAliveReceiver() {
+    private void unregisterReceiver() {
         try {
-            unregisterReceiver(mKeepAliveReceiver);
+            unregisterReceiver(mReceiver);
         }
         catch (IllegalArgumentException e) {
             e.printStackTrace();

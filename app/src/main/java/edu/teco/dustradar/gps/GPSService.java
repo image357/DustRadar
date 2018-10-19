@@ -112,7 +112,6 @@ public class GPSService extends Service implements LocationListener {
 
         mLocation = null;
         mManger = (LocationManager) getSystemService(this.LOCATION_SERVICE);
-
         try {
             // TODO: accuracy based on setings
             mManger.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
@@ -123,7 +122,7 @@ public class GPSService extends Service implements LocationListener {
             e.printStackTrace();
         }
 
-        registerKeepAliveReceiver();
+        registerReceiver();
 
         Log.i(TAG, "GPSService started");
         return START_REDELIVER_INTENT;
@@ -133,10 +132,10 @@ public class GPSService extends Service implements LocationListener {
     @Override
     public void onDestroy() {
         Log.i(TAG, "GPSService destroyed");
+
         mManger.removeUpdates(this);
         mLocation = null;
-
-        unregisterKeepAliveReceiver();
+        unregisterReceiver();
 
         wakeLock.release();
         super.onDestroy();
@@ -267,7 +266,7 @@ public class GPSService extends Service implements LocationListener {
 
     // BroadcastReceivers
 
-    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
+    private final BroadcastReceiver mReceiver = (new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
@@ -280,13 +279,17 @@ public class GPSService extends Service implements LocationListener {
         }
     });
 
-    private void registerKeepAliveReceiver() {
-        registerReceiver(mKeepAliveReceiver, KeepAliveManager.getIntentFilter());
+    private void registerReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
+
+        registerReceiver(mReceiver, intentFilter);
     }
 
-    private void unregisterKeepAliveReceiver() {
+    private void unregisterReceiver() {
         try {
-            unregisterReceiver(mKeepAliveReceiver);
+            unregisterReceiver(mReceiver);
         }
         catch (IllegalArgumentException e) {
             e.printStackTrace();

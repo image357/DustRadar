@@ -97,7 +97,14 @@ public class BLEBridgeHandler extends Fragment {
     private CompoundButton.OnCheckedChangeListener onRecordingSwitchChange = (new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            DataService.setRecord(isChecked);
+            if (isChecked) {
+                final Intent intent = new Intent(DataService.BROADCAST_DATA_START_RECORDING);
+                getActivity().sendBroadcast(intent);
+            }
+            else {
+                final Intent intent = new Intent(DataService.BROADCAST_DATA_STOP_RECORDING);
+                getActivity().sendBroadcast(intent);
+            }
         }
     });
 

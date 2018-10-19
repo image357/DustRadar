@@ -12,26 +12,16 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class KeepAliveManager extends Service {
 
     private final static String TAG = KeepAliveManager.class.getSimpleName();
 
     // broadcast actions
-
     public final static String BROADCAST_KEEP_ALIVE_PING = "BROADCAST_KEEP_ALIVE_PING";
     public final static String BROADCAST_KEEP_ALIVE_REPLY = "BROADCAST_KEEP_ALIVE_REPLY";
 
-    private final static List<String> allBroadcasts = Arrays.asList(
-            BROADCAST_KEEP_ALIVE_PING,
-            BROADCAST_KEEP_ALIVE_REPLY
-    );
-
 
     // private members
-
     private PowerManager.WakeLock wakeLock;
     private Handler keepAliveHandler;
 
@@ -63,7 +53,6 @@ public class KeepAliveManager extends Service {
         context.startService(serviceIntent);
     }
 
-
     public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
@@ -72,7 +61,6 @@ public class KeepAliveManager extends Service {
         Intent serviceIntent = new Intent(context, KeepAliveManager.class);
         context.stopService(serviceIntent);
     }
-
 
     public static boolean isRunning(Context context) {
         if(context == null) {
@@ -89,17 +77,6 @@ public class KeepAliveManager extends Service {
     }
 
 
-    public static IntentFilter getIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-
-        for(String broadcast : allBroadcasts) {
-            intentFilter.addAction(broadcast);
-        }
-
-        return intentFilter;
-    }
-
-
     // event handlers
 
     @Override
@@ -108,8 +85,7 @@ public class KeepAliveManager extends Service {
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DustRadar::KeepAliveManager::Wakelock");
         wakeLock.acquire();
 
-        registerReceiver(mKeepAliveReceiver, getIntentFilter());
-
+        registerReceiver();
         keepAliveHandler = new Handler();
         keepAliveHandler.postDelayed(keepAliveRunnable, pingDelay);
 
@@ -124,14 +100,7 @@ public class KeepAliveManager extends Service {
         Log.i(TAG, "KeepAliveManager destroyed");
 
         keepAliveHandler.removeCallbacks(keepAliveRunnable);
-
-        // close BroadcastReceivers
-        try {
-            unregisterReceiver(mKeepAliveReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
+        unregisterReceiver();
 
         wakeLock.release();
         super.onDestroy();
@@ -142,12 +111,6 @@ public class KeepAliveManager extends Service {
     public IBinder onBind(Intent intent) {
         // no binding allowed
         throw new UnsupportedOperationException("binding not allowed");
-    }
-
-
-    // static methods
-
-    public static void registerAliveService(Class service) {
     }
 
 
@@ -162,30 +125,41 @@ public class KeepAliveManager extends Service {
     private Runnable keepAliveRunnable = (new Runnable() {
         @Override
         public void run() {
-            Intent ping = new Intent(BROADCAST_KEEP_ALIVE_PING);
-            sendBroadcast(ping);
-
+            broadcastUpdate(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
             keepAliveHandler.postDelayed(keepAliveRunnable, pingDelay);
         }
     });
 
 
-    private void checkRunningServiceOrRestart(Class service) {
-    }
+    // BroadcastReceiver
 
-
-    // BroadcastReceivers
-
-    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
+    private final BroadcastReceiver mReceiver = (new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if (BROADCAST_KEEP_ALIVE_REPLY.equals(action)) {
+            if (KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY.equals(action)) {
                 // TODO: handle keep alive ping replies
                 return;
             }
         }
     });
+
+    private void registerReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
+
+        registerReceiver(mReceiver, intentFilter);
+    }
+
+    private void unregisterReceiver() {
+        try {
+            unregisterReceiver(mReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

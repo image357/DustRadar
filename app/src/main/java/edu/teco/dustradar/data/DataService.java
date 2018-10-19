@@ -15,8 +15,6 @@ import com.squareup.tape.QueueFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import edu.teco.dustradar.blebridge.KeepAliveManager;
 import edu.teco.dustradar.bluetooth.BLEService;
@@ -27,22 +25,20 @@ public class DataService extends Service {
     private final static String TAG = DataService.class.getSimpleName();
 
     // broadcasts
+    public final static String BROADCAST_DATA_START_RECORDING = "BROADCAST_DATA_START_RECORDING";
+    public final static String BROADCAST_DATA_STOP_RECORDING = "BROADCAST_DATA_STOP_RECORDING";
     public final static String BROADCAST_DATA_STORED = "BROADCAST_DATA_STORED";
-
-    private final static List<String> allBroadcasts = Arrays.asList(
-            BROADCAST_DATA_STORED
-    );
+    public final static String BROADCAST_DATASERVICE_ERROR = "BROADCAST_DATASERVICE_ERROR";
 
 
     // static members
-
-    public final static String fileName = "DataQueue";
     private static QueueFile queueFile = null;
-    private static boolean shouldRecord = false;
-
 
     // private members
     private PowerManager.WakeLock wakeLock;
+    private boolean shouldRecord;
+
+    private final String fileName = "DataQueue";
 
 
     // constructors
@@ -55,7 +51,7 @@ public class DataService extends Service {
 
     public static void startService(Context context) {
         if(context == null) {
-            throw new Resources.NotFoundException("Cannot start service without context or device");
+            throw new Resources.NotFoundException("Cannot start service without context");
         }
 
         if (isRunning(context)) {
@@ -68,7 +64,6 @@ public class DataService extends Service {
         context.startService(serviceIntent);
     }
 
-
     public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
@@ -77,7 +72,6 @@ public class DataService extends Service {
         Intent serviceIntent = new Intent(context, DataService.class);
         context.stopService(serviceIntent);
     }
-
 
     public static boolean isRunning(Context context) {
         if(context == null) {
@@ -103,19 +97,8 @@ public class DataService extends Service {
         wakeLock.acquire();
 
         shouldRecord = false;
-
-        File file = new File(getFilesDir(), fileName);
-        queueFile = null;
-        try {
-            queueFile = new QueueFile(file);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            Log.e(TAG, "Cannot create or access queueFile");
-        }
-
-        registerKeepAliveReceiver();
-        registerBLEReceiver();
+        openQueueFile();
+        registerReceiver();
 
         Log.i(TAG, "DataService started");
         return START_REDELIVER_INTENT;
@@ -124,20 +107,10 @@ public class DataService extends Service {
 
     @Override public void onDestroy() {
         Log.i(TAG, "DataService destroyed");
+
         shouldRecord = false;
-
-        // close BroadcastReceiver
-        unregisterKeepAliveReceiver();
-        unregisterKeepAliveReceiver();
-
-        // close QueueFile
-        try {
-            queueFile.close();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        queueFile = null;
+        unregisterReceiver();
+        closeQueueFile();
 
         wakeLock.release();
         super.onDestroy();
@@ -152,11 +125,6 @@ public class DataService extends Service {
 
 
     // static methods
-
-    public static void setRecord(boolean record) {
-        shouldRecord = record;
-    }
-
 
     public static int size() {
         if (queueFile == null) {
@@ -238,17 +206,6 @@ public class DataService extends Service {
     }
 
 
-    public static IntentFilter getIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-
-        for(String broadcast : allBroadcasts) {
-            intentFilter.addAction(broadcast);
-        }
-
-        return intentFilter;
-    }
-
-
     // private methods
 
     private void broadcastUpdate(final String action) {
@@ -257,27 +214,72 @@ public class DataService extends Service {
     }
 
 
-    // BroadcastReceivers
+    private void openQueueFile() {
+        closeQueueFile();
 
-    private final BroadcastReceiver mBLEReceiver = (new BroadcastReceiver() {
+        File file = new File(getFilesDir(), fileName);
+        try {
+            queueFile = new QueueFile(file);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "Cannot create or access queueFile");
+            broadcastUpdate(DataService.BROADCAST_DATASERVICE_ERROR);
+        }
+    }
+
+    private void closeQueueFile() {
+        try {
+            queueFile.close();
+        }
+        catch (Exception e) {
+            // pass
+        }
+        queueFile = null;
+    }
+
+
+    // BroadcastReceiver
+
+    private final BroadcastReceiver mReceiver = (new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
+            if (DataService.BROADCAST_DATA_START_RECORDING.equals(action)) {
+                shouldRecord = true;
+                return;
+            }
+
+            if (DataService.BROADCAST_DATA_STOP_RECORDING.equals(action)) {
+                shouldRecord = false;
+                return;
+            }
+
             if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
+                if (shouldRecord == false) {
+                    return;
+                }
+
+                if (queueFile == null) {
+                    Log.e(TAG, "Cannot record data because queueFile is null reference");
+                    broadcastUpdate(DataService.BROADCAST_DATASERVICE_ERROR);
+                    return;
+                }
+
                 String msg = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
                 DataObject data = new DataObject(msg);
-                if (data.isValid() && queueFile != null && shouldRecord) {
+                if (data.isValid()) {
                     // store data
                     try {
                         byte[] bytes = DataObject.serialize(data);
                         queueFile.add(bytes);
                         broadcastUpdate(BROADCAST_DATA_STORED);
-                        Log.i(TAG, "stored data: " + msg + " - total: " + String.valueOf(queueFile.size()));
                     }
                     catch (Exception e) {
                         e.printStackTrace();
                         Log.e(TAG, "Cannot serialze or save data");
+                        broadcastUpdate(DataService.BROADCAST_DATASERVICE_ERROR);
                     }
                 }
                 return;
@@ -296,46 +298,36 @@ public class DataService extends Service {
                 // TODO: handle metadata
                 return;
             }
-        }
-    });
-
-    private void registerBLEReceiver() {
-        registerReceiver(mBLEReceiver, BLEService.getIntentFilter());
-    }
-
-    private void unregisterBLEReceiver() {
-        try {
-            unregisterReceiver(mBLEReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
 
             if (KeepAliveManager.BROADCAST_KEEP_ALIVE_PING.equals(action)) {
-                Intent reply = new Intent(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
-                sendBroadcast(reply);
+                broadcastUpdate(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
                 return;
             }
         }
     });
 
-    private void registerKeepAliveReceiver() {
-        registerReceiver(mKeepAliveReceiver, KeepAliveManager.getIntentFilter());
+    private void registerReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction(DataService.BROADCAST_DATA_START_RECORDING);
+        intentFilter.addAction(DataService.BROADCAST_DATA_STOP_RECORDING);
+
+        intentFilter.addAction(BLEService.BROADCAST_BLE_DATA_AVAILABLE);
+        intentFilter.addAction(BLEService.BROADCAST_BLE_DATADESCRIPTION_AVAILABLE);
+        intentFilter.addAction(BLEService.BROADCAST_BLE_METADATA_AVAILABLE);
+
+        intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
+
+        registerReceiver(mReceiver, intentFilter);
     }
 
-    private void unregisterKeepAliveReceiver() {
+    private void unregisterReceiver() {
         try {
-            unregisterReceiver(mKeepAliveReceiver);
+            unregisterReceiver(mReceiver);
         }
         catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
     }
+
 }

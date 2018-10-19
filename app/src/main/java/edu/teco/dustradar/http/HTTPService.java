@@ -14,10 +14,8 @@ import android.os.PowerManager;
 import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.UUID;
 
 import edu.teco.dustradar.R;
@@ -39,15 +37,6 @@ public class HTTPService extends Service {
     public final static String ACTION_POST_DATASTREAM = "ACTION_POST_DATASTREAM";
     public final static String ACTION_POST_SENSOR = "ACTION_POST_SENSOR";
     public final static String ACTION_POST_OBSERVEDPROPERTY = "ACTION_POST_OBSERVEDPROPERTY";
-    public final static String ACTION_POST_OBSERVATION = "ACTION_POST_OBSERVATION";
-    public final static String ACTION_POST_FEATUREOFINTEREST = "ACTION_POST_FEATUREOFINTEREST";
-    public final static String ACTION_POST_EVENT = "ACTION_POST_EVENT";
-
-    private final static List<String> allBroadcasts = Arrays.asList(
-            BROADCAST_START_TRANSMIT,
-            BROADCAST_STOP_TRANSMIT,
-            BROADCAST_HTTP_TIMEOUT
-    );
 
 
     // private members
@@ -120,9 +109,7 @@ public class HTTPService extends Service {
         handler = new Handler();
         transmitMap = new HashMap<>();
 
-        registerTransmitReceiver();
-        registerHTTPIntentReceiver();
-        registerKeepAliveReceiver();
+        registerReceiver();
 
         Log.i(TAG, "HTTPService started");
         return START_REDELIVER_INTENT;
@@ -134,7 +121,7 @@ public class HTTPService extends Service {
         shouldTransmit = false;
         handler.removeCallbacks(transmitRunnable);
 
-        // refill unsubmitted data
+        // refill submitted data
         Log.d(TAG, "transmitMap size: " + String.valueOf(transmitMap.size()));
         if (! transmitMap.isEmpty()) {
             Iterator it = transmitMap.entrySet().iterator();
@@ -145,11 +132,8 @@ public class HTTPService extends Service {
             }
         }
         transmitMap.clear();
-        transmitMap = null;
 
-        unregisterTransmitReceiver();
-        unregisterHTTPIntentReceiver();
-        unregisterKeepAliveReceiver();
+        unregisterReceiver();
 
         wakeLock.release();
         super.onDestroy();
@@ -163,19 +147,6 @@ public class HTTPService extends Service {
     }
 
 
-    // static methods
-
-    public static IntentFilter getIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-
-        for(String broadcast : allBroadcasts) {
-            intentFilter.addAction(broadcast);
-        }
-
-        return intentFilter;
-    }
-
-
     // private methods
 
     private void broadcastUpdate(final String action) {
@@ -186,12 +157,12 @@ public class HTTPService extends Service {
 
     // BroadcastReceivers
 
-    private final BroadcastReceiver mTransmitReceiver = (new BroadcastReceiver() {
+    private final BroadcastReceiver mReceiver = (new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if (BROADCAST_START_TRANSMIT.equals(action)) {
+            if (HTTPService.BROADCAST_START_TRANSMIT.equals(action)) {
                 if (shouldTransmit == false) {
                     Log.i(TAG, "Transmission started");
                     shouldTransmit = true;
@@ -200,32 +171,11 @@ public class HTTPService extends Service {
                 return;
             }
 
-            if (BROADCAST_STOP_TRANSMIT.equals(action)) {
+            if (HTTPService.BROADCAST_STOP_TRANSMIT.equals(action)) {
                 Log.i(TAG, "Transmission stopped");
                 shouldTransmit = false;
                 return;
             }
-        }
-    });
-
-    private void registerTransmitReceiver(){
-        registerReceiver(mTransmitReceiver, getIntentFilter());
-    }
-
-    private void unregisterTransmitReceiver() {
-        try {
-            unregisterReceiver(mTransmitReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private final BroadcastReceiver mHTTPIntentReceiver = (new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
 
             if (HTTPIntent.BROADCAST_HTTP_POST_FAILURE.equals(action)) {
                 String uuid = intent.getStringExtra(HTTPIntent.EXTRA_BROADCAST);
@@ -257,43 +207,31 @@ public class HTTPService extends Service {
 
                 transmitMap.remove(uuid);
             }
-        }
-    });
-
-    private void registerHTTPIntentReceiver() {
-        registerReceiver(mHTTPIntentReceiver, HTTPIntent.getIntentFilter());
-    }
-
-    private void unregisterHTTPIntentReceiver() {
-        try {
-            unregisterReceiver(mHTTPIntentReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private final BroadcastReceiver mKeepAliveReceiver = (new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
 
             if (KeepAliveManager.BROADCAST_KEEP_ALIVE_PING.equals(action)) {
-                Intent reply = new Intent(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
-                sendBroadcast(reply);
+                broadcastUpdate(KeepAliveManager.BROADCAST_KEEP_ALIVE_REPLY);
                 return;
             }
         }
     });
 
-    private void registerKeepAliveReceiver() {
-        registerReceiver(mKeepAliveReceiver, KeepAliveManager.getIntentFilter());
+    private void registerReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+
+        intentFilter.addAction(HTTPService.BROADCAST_START_TRANSMIT);
+        intentFilter.addAction(HTTPService.BROADCAST_STOP_TRANSMIT);
+
+        intentFilter.addAction(HTTPIntent.BROADCAST_HTTP_POST_FAILURE);
+        intentFilter.addAction(HTTPIntent.BROADCAST_HTTP_POST_SUCCESS);
+
+        intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
+
+        registerReceiver(mReceiver, intentFilter);
     }
 
-    private void unregisterKeepAliveReceiver() {
+    private void unregisterReceiver() {
         try {
-            unregisterReceiver(mKeepAliveReceiver);
+            unregisterReceiver(mReceiver);
         }
         catch (IllegalArgumentException e) {
             e.printStackTrace();
