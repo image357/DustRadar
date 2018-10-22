@@ -1,6 +1,7 @@
 package edu.teco.dustradar.data;
 
 import android.location.Location;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -137,7 +138,14 @@ public class DataObject implements Serializable {
 
         Gson gson = new Gson();
         Type hashMapType = new TypeToken<HashMap<String, Object>>(){}.getType();
-        data_map = gson.fromJson(this.data, hashMapType);
+        try {
+            data_map = gson.fromJson(this.data, hashMapType);
+        }
+        catch (Exception e) {
+            Log.e(TAG, "Data is malformed: " + data);
+            e.printStackTrace();
+            isvalid = false;
+        }
     }
 
 
