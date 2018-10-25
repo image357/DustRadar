@@ -24,6 +24,7 @@
     <string name="blebridge_button_connecting">Connecting</string>
     <string name="blebridge_switch_record">Recording</string>
     <string name="blebridge_switch_transmit">Transmitting</string>
+    <string name="blebridge_handler_device_address">Device Address:</string>
     <string name="blebridge_ble_connection_status">BLE Status:</string>
     <string name="blebridge_gps_connection_status">GPS Status:</string>
     <string name="blebridge_stored_datapoints">Stored Datapoints:</string>
@@ -34,11 +35,11 @@
     <string name="blebridge_pref_default_title">Use default values</string>
     <string name="blebridge_pref_default_summary">This allows you to reset the settings.</string>
     <string name="blebridge_pref_default_default">false</string>
-    
+
     <string name="blebridge_pref_frosturl_key">blebridge_pref_frosturl_key</string>
     <string name="blebridge_pref_frosturl_title">SensorThings Server URL</string>
     <string name="blebridge_pref_frosturl_default">http://smartaqnet.teco.edu:8080/FROST-Server</string>
-    
+
     <string name="blebridge_pref_thing_id_key">blebridge_pref_thingid_key</string>
     <string name="blebridge_pref_thing_id_title">Thing ID</string>
     <string name="blebridge_pref_thing_id_default">testthing</string>

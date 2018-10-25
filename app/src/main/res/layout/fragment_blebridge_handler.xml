@@ -46,6 +46,27 @@
         app:layout_constraintTop_toBottomOf="@id/switch_record"/>
 
     <TextView
+        android:id="@+id/textView_blebridge_device_address"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/black"
+        android:textSize="@dimen/mode_fontsize_description"
+        android:text="@string/blebridge_handler_device_address"
+        app:layout_constraintTop_toBottomOf="@id/ruler_1"
+        app:layout_constraintStart_toStartOf="@id/switch_record" />
+
+    <View
+        android:id="@+id/ruler_2"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:layout_marginTop="20dp"
+        android:background="@color/black"
+        app:layout_constraintTop_toBottomOf="@id/textView_blebridge_device_address"/>
+
+
+    <TextView
         android:id="@+id/textView_blebridge_ble_connection_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -54,7 +75,7 @@
         android:textColor="@color/black"
         android:textSize="@dimen/mode_fontsize_description"
         android:text="@string/blebridge_ble_connection_status"
-        app:layout_constraintTop_toBottomOf="@id/ruler_1"
+        app:layout_constraintTop_toBottomOf="@id/ruler_2"
         app:layout_constraintStart_toStartOf="@id/switch_record" />
 
     <TextView
@@ -70,7 +91,7 @@
         app:layout_constraintStart_toStartOf="@id/switch_record" />
 
     <View
-        android:id="@+id/ruler_2"
+        android:id="@+id/ruler_3"
         android:layout_width="match_parent"
         android:layout_height="3dp"
         android:layout_marginTop="20dp"
@@ -86,11 +107,11 @@
         android:textColor="@color/black"
         android:textSize="@dimen/mode_fontsize_description"
         android:text="@string/blebridge_stored_datapoints"
-        app:layout_constraintTop_toBottomOf="@id/ruler_2"
+        app:layout_constraintTop_toBottomOf="@id/ruler_3"
         app:layout_constraintStart_toStartOf="@id/switch_record" />
 
     <View
-        android:id="@+id/ruler_3"
+        android:id="@+id/ruler_4"
         android:layout_width="match_parent"
         android:layout_height="3dp"
         android:layout_marginTop="20dp"
@@ -106,7 +127,7 @@
         android:textColor="@color/black"
         android:textSize="@dimen/mode_fontsize_description"
         android:text="@string/blebridge_last_data"
-        app:layout_constraintTop_toBottomOf="@id/ruler_3"
+        app:layout_constraintTop_toBottomOf="@id/ruler_4"
         app:layout_constraintStart_toStartOf="@id/switch_record" />
 
 </android.support.constraint.ConstraintLayout>

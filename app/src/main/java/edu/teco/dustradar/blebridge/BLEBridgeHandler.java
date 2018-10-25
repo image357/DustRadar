@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,12 +28,18 @@ public class BLEBridgeHandler extends Fragment {
 
     private static final String TAG = BLEBridgeHandler.class.getSimpleName();
 
-    // private members
+    // parameters
+    private static final String ARG_DEVICEADDRESS = "param_deviceaddress";
 
+    private String deviceAddress;
+
+    // private members
     private Switch recordingSwtich;
     private Switch transmittingSwitch;
 
     // view updates
+    private TextView tvDeviceAddress;
+
     private TextView tvBLEConnectionStatus;
     private String bleConnectionStatus = "Connected";
 
@@ -53,12 +60,32 @@ public class BLEBridgeHandler extends Fragment {
     public BLEBridgeHandler() {
     }
 
+    public static BLEBridgeHandler newInstance(String deviceAddress) {
+        BLEBridgeHandler fragment = new BLEBridgeHandler();
+        Bundle args = new Bundle();
+        args.putString(ARG_DEVICEADDRESS, deviceAddress);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
 
     // event handlers
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            deviceAddress = getArguments().getString(ARG_DEVICEADDRESS);
+        }
+
+        Log.i(TAG, "onCreate() for " + deviceAddress);
+    }
+
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i(TAG, "onCreateView() for " + deviceAddress);
         View rootView;
         rootView = inflater.inflate(R.layout.fragment_blebridge_handler, container, false);
 
@@ -68,6 +95,7 @@ public class BLEBridgeHandler extends Fragment {
         transmittingSwitch = rootView.findViewById(R.id.switch_transmit);
         transmittingSwitch.setOnCheckedChangeListener(onTransmittingSwitchChange);
 
+        tvDeviceAddress = rootView.findViewById(R.id.textView_blebridge_device_address);
         tvBLEConnectionStatus = rootView.findViewById(R.id.textView_blebridge_ble_connection_status);
         tvGPSConnectionStatus = rootView.findViewById(R.id.textView_blebridge_gps_connection_status);
         tvStoredDatapoints = rootView.findViewById(R.id.textView_blebridge_datapoints);
@@ -80,6 +108,7 @@ public class BLEBridgeHandler extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        Log.i(TAG, "onResume() for " + deviceAddress);
 
         updateView();
         registerHandlerReceiver();
@@ -90,6 +119,7 @@ public class BLEBridgeHandler extends Fragment {
     public void onPause() {
         unregisterHandlerReceiver();
 
+        Log.i(TAG, "onPause() for " + deviceAddress);
         super.onPause();
     }
 
@@ -133,6 +163,9 @@ public class BLEBridgeHandler extends Fragment {
         }
         lastViewUpdate = currenttime;
         String temp;
+
+        temp = getResources().getString(R.string.blebridge_handler_device_address);
+        tvDeviceAddress.setText(temp + "   " + deviceAddress);
 
         temp = getResources().getString(R.string.blebridge_ble_connection_status);
         tvBLEConnectionStatus.setText(temp + "   " + bleConnectionStatus);
@@ -185,8 +218,11 @@ public class BLEBridgeHandler extends Fragment {
             }
 
             if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
-                lastData = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
-                updateView();
+                String address = intent.getStringExtra(BLEService.BROADCAST_EXTRA_ADDRESS);
+                if (deviceAddress.equals(address)) {
+                    lastData = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                    updateView();
+                }
                 return;
             }
 

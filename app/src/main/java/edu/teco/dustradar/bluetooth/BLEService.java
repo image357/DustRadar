@@ -71,6 +71,7 @@ public class BLEService extends Service {
     public final static String BROADCAST_GATT_SERVICES_DISCOVERED = "BROADCAST_GATT_SERVICES_DISCOVERED";
     public final static String BROADCAST_BLE_DATA_AVAILABLE = "BROADCAST_BLE_DATA_AVAILABLE";
     public final static String BROADCAST_EXTRA_DATA = "BROADCAST_EXTRA_DATA";
+    public final static String BROADCAST_EXTRA_ADDRESS = "BROADCAST_EXTRA_ADDRESS";
     public final static String BROADCAST_BLE_READ_DATADESCRIPTION = "BROADCAST_BLE_READ_DATADESCRIPTION";
     public final static String BROADCAST_BLE_DATADESCRIPTION_AVAILABLE = "BROADCAST_BLE_DATADESCRIPTION_AVAILABLE";
     public final static String BROADCAST_BLE_READ_METADATA = "BROADCAST_BLE_READ_METADATA";
@@ -290,9 +291,10 @@ public class BLEService extends Service {
     }
 
 
-    private void broadcastUpdate(final String action, final String data) {
+    private void broadcastUpdate(final String action, final String data, final String address) {
         final Intent intent = new Intent(action);
         intent.putExtra(BROADCAST_EXTRA_DATA, data);
+        intent.putExtra(BROADCAST_EXTRA_ADDRESS, address);
         sendBroadcast(intent);
     }
 
@@ -398,19 +400,19 @@ public class BLEService extends Service {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (characteristic.equals(DataChar)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE, data);
+                    broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE, data, gatt.getDevice().getAddress());
                     return;
                 }
 
                 if (characteristic.equals(DataDescriptionChar)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE, data);
+                    broadcastUpdate(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE, data, gatt.getDevice().getAddress());
                     return;
                 }
 
                 if (characteristic.equals(MetadataChar)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE, data);
+                    broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE, data, gatt.getDevice().getAddress());
                     return;
                 }
 

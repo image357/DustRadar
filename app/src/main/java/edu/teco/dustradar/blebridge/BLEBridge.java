@@ -23,6 +23,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 import edu.teco.dustradar.R;
 import edu.teco.dustradar.bluetooth.BLEScan;
 import edu.teco.dustradar.bluetooth.BLEService;
@@ -380,9 +382,16 @@ public class BLEBridge extends AppCompatActivity {
                 sendBroadcast(RDintent);
 
                 // start BLEBridgeHandler Fragment
-                BLEBridgeHandler handlerFragment = new BLEBridgeHandler();
+                ArrayList<String> deviceAddress = new ArrayList<>();
+                // TODO: get real device addresses
+                deviceAddress.add("eins");
+                deviceAddress.add("zwei");
+                deviceAddress.add("drei");
+                deviceAddress.add("vier");
+
+                BLEBridgeDeviceSwitcher switcherFragment = BLEBridgeDeviceSwitcher.newInstance(deviceAddress);
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-                transaction.replace(R.id.fragment_container, handlerFragment);
+                transaction.replace(R.id.fragment_container, switcherFragment);
                 transaction.commit();
 
                 Toast.makeText(context, "Connected", Toast.LENGTH_LONG).show();
