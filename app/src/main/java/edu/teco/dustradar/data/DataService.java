@@ -269,6 +269,7 @@ public class DataService extends Service {
 
                 String msg = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
                 DataObject data = new DataObject(msg);
+                // TODO: important: add ble address to dataobject for datastream id generation
                 if (data.isValid()) {
                     // store data
                     try {

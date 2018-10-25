@@ -298,6 +298,7 @@ public class BLEService extends Service {
             return true;
         }
 
+        Log.w(TAG, "device with address " + gatt.getDevice().getAddress() + " does not have required services");
         return false;
     }
 

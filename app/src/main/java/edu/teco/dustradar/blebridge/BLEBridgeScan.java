@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -103,13 +102,10 @@ public class BLEBridgeScan extends Fragment {
         public void onClick(View v) {
             SparseBooleanArray isChecked = listBLE.getCheckedItemPositions();
             ArrayList<Integer> positions = new ArrayList<>();
-            Log.d(TAG, "isChecked size: " + String.valueOf(isChecked.size()));
-            Log.d(TAG, "list size: " + String.valueOf(listBLE.getCount()));
             for (int i = 0; i < isChecked.size(); i++) {
                 if (isChecked.valueAt(i)) {
                     int index = isChecked.keyAt(i);
                     positions.add(index);
-                    Log.d(TAG, "index added: " + String.valueOf(index));
                 }
             }
 

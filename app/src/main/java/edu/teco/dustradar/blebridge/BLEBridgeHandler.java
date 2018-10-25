@@ -227,14 +227,20 @@ public class BLEBridgeHandler extends Fragment {
             }
 
             if (BLEService.BROADCAST_GATT_CONNECTED.equals(action)) {
-                bleConnectionStatus = "Connected";
-                updateView();
+                String address = intent.getStringExtra(BLEService.BROADCAST_EXTRA_ADDRESS);
+                if (deviceAddress.equals(address)) {
+                    bleConnectionStatus = "Connected";
+                    updateView();
+                }
                 return;
             }
 
             if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
-                bleConnectionStatus = "Disconnected";
-                updateView();
+                String address = intent.getStringExtra(BLEService.BROADCAST_EXTRA_ADDRESS);
+                if (deviceAddress.equals(address)) {
+                    bleConnectionStatus = "Disconnected";
+                    updateView();
+                }
                 return;
             }
 
