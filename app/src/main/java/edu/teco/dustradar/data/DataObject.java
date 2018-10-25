@@ -29,7 +29,7 @@ public class DataObject implements Serializable {
     private double longitude = 0.0;
     private double height = 0.0;
     private String data = null;
-    private HashMap<String, Object> data_map = null;
+    private HashMap<String, Double> data_map = null;
 
     private boolean isvalid = true;
 
@@ -137,7 +137,7 @@ public class DataObject implements Serializable {
         }
 
         Gson gson = new Gson();
-        Type hashMapType = new TypeToken<HashMap<String, Object>>(){}.getType();
+        Type hashMapType = new TypeToken<HashMap<String, Double>>(){}.getType();
         try {
             data_map = gson.fromJson(this.data, hashMapType);
         }
@@ -158,7 +158,7 @@ public class DataObject implements Serializable {
             return -1.0;
         }
 
-        return (double) data_map.get(key_PM10);
+        return data_map.get(key_PM10).doubleValue();
     }
 
 
@@ -171,7 +171,7 @@ public class DataObject implements Serializable {
             return -1.0;
         }
 
-        return (double) data_map.get(key_PM25);
+        return data_map.get(key_PM25).doubleValue();
     }
 
 
@@ -184,7 +184,7 @@ public class DataObject implements Serializable {
             return -1000.0;
         }
 
-        return (double) data_map.get(key_TEMP);
+        return data_map.get(key_TEMP).doubleValue();
     }
 
 
@@ -197,7 +197,7 @@ public class DataObject implements Serializable {
             return -1.0;
         }
 
-        return (double) data_map.get(key_HUM);
+        return data_map.get(key_HUM).doubleValue();
     }
 
 
@@ -210,7 +210,7 @@ public class DataObject implements Serializable {
             return -1.0;
         }
 
-        return (double) data_map.get(key_ATM);
+        return data_map.get(key_ATM).doubleValue();
     }
 
 

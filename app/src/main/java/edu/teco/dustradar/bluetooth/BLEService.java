@@ -157,7 +157,7 @@ public class BLEService extends Service {
         }
 
         // get wakelock
-        PowerManager powerManager = (PowerManager) getSystemService(this.POWER_SERVICE);
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DustRadar::BLEService::Wakelock");
         wakeLock.acquire();
 
@@ -258,6 +258,7 @@ public class BLEService extends Service {
         boolean allowed = gatt.readCharacteristic(newcharactersistic);
         if (!allowed) {
             Log.w(TAG, "No permission to read characteristic");
+            CharFIFO.add(newcharactersistic);
         }
     }
 
