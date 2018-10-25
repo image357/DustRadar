@@ -113,7 +113,7 @@ public class GPSService extends Service implements LocationListener {
         mLocation = null;
         mManger = (LocationManager) getSystemService(this.LOCATION_SERVICE);
         try {
-            // TODO: accuracy based on setings
+            // TODO: accuracy based on settings
             mManger.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
             mManger.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
         }

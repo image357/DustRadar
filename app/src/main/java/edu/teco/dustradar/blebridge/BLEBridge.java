@@ -38,6 +38,7 @@ public class BLEBridge extends AppCompatActivity {
 
     // private members
     private BLEScan bleScan;
+    private ArrayList<BluetoothDevice> devices;
 
     private Long lastTimestamp;
     private boolean inSettings;
@@ -272,8 +273,9 @@ public class BLEBridge extends AppCompatActivity {
 
     // public methods
 
-    public void InitiateBLEConnection(BluetoothDevice device) {
-        startServices(device);
+    public void InitiateBLEConnection(ArrayList<BluetoothDevice> devices) {
+        this.devices = devices;
+        startServices(devices);
 
         shouldTimeout = true;
 
@@ -320,7 +322,7 @@ public class BLEBridge extends AppCompatActivity {
     }
 
 
-    private void startServices(BluetoothDevice device) {
+    private void startServices(ArrayList<BluetoothDevice> devices) {
         if (GPSService.isRunning(this)) {
             Log.d(TAG, "Service is already running");
             GPSService.stopService(this);
@@ -347,7 +349,7 @@ public class BLEBridge extends AppCompatActivity {
         }
 
         GPSService.startService(this);
-        BLEService.startService(this, device);
+        BLEService.startService(this, devices);
         DataService.startService(this);
         HTTPService.startService(this);
 
@@ -383,12 +385,9 @@ public class BLEBridge extends AppCompatActivity {
 
                 // start BLEBridgeHandler Fragment
                 ArrayList<String> deviceAddress = new ArrayList<>();
-                // TODO: get real device addresses
-                deviceAddress.add("eins");
-                deviceAddress.add("zwei");
-                deviceAddress.add("drei");
-                deviceAddress.add("vier");
-
+                for (BluetoothDevice device : devices) {
+                    deviceAddress.add(device.getAddress());
+                }
                 BLEBridgeDeviceSwitcher switcherFragment = BLEBridgeDeviceSwitcher.newInstance(deviceAddress);
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container, switcherFragment);

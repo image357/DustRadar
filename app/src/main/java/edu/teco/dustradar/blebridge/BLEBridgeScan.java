@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +15,8 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.Switch;
+
+import java.util.ArrayList;
 
 import edu.teco.dustradar.R;
 import edu.teco.dustradar.bluetooth.BLEDeviceListAdapter;
@@ -97,24 +101,44 @@ public class BLEBridgeScan extends Fragment {
     private View.OnClickListener onConnectButtonClick = (new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            int postion = listBLE.getCheckedItemPosition();
+            SparseBooleanArray isChecked = listBLE.getCheckedItemPositions();
+            ArrayList<Integer> positions = new ArrayList<>();
+            Log.d(TAG, "isChecked size: " + String.valueOf(isChecked.size()));
+            Log.d(TAG, "list size: " + String.valueOf(listBLE.getCount()));
+            for (int i = 0; i < isChecked.size(); i++) {
+                if (isChecked.valueAt(i)) {
+                    int index = isChecked.keyAt(i);
+                    positions.add(index);
+                    Log.d(TAG, "index added: " + String.valueOf(index));
+                }
+            }
 
-
-            if (postion < 0 || postion >= bleDeviceListAdapter.getCount()) {
+            if (positions.size() == 0) {
                 Snackbar.make(v, "Select a DustTracker device first.", Snackbar.LENGTH_SHORT).show();
                 return;
             }
 
-            BluetoothDevice device = bleDeviceListAdapter.getDevice(postion);
-            if (device == null) {
-                Snackbar.make(v, "Cannot connect to the device.", Snackbar.LENGTH_SHORT).show();
-                return;
+            for (int position : positions) {
+                if (position < 0 || position >= bleDeviceListAdapter.getCount()) {
+                    Snackbar.make(v, "Select a DustTracker device first.", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            ArrayList<BluetoothDevice> devices = new ArrayList<>();
+            for (int position : positions) {
+                BluetoothDevice device = bleDeviceListAdapter.getDevice(position);
+                if (device == null) {
+                    Snackbar.make(v, "Cannot connect to the device.", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+                devices.add(device);
             }
 
             if (!isConnecting) {
                 isConnecting = true;
                 connectButton.setText(R.string.blebridge_button_connecting);
-                ((BLEBridge) getActivity()).InitiateBLEConnection(device);
+                ((BLEBridge) getActivity()).InitiateBLEConnection(devices);
             }
         }
     });

@@ -25,9 +25,12 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.util.Pair;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -82,20 +85,22 @@ public class BLEService extends Service {
 
 
     // private members
+    ArrayList<String> deviceAddress = new ArrayList<>();
     private boolean shouldReconnect = false;
-    private boolean firstConnect = false;
+    private int firstConnect = -1;
 
-    private BluetoothGatt mBluetoothGatt = null;
+    private HashMap<String, BluetoothGatt> mBluetoothGatt = new HashMap<>();
 
-    private BluetoothGattService DataService;
-    private BluetoothGattCharacteristic NotifyChar;
-    private BluetoothGattCharacteristic DataChar;
-    private BluetoothGattCharacteristic DataDescriptionChar;
+    private HashMap<String, BluetoothGattService> DataService = new HashMap<>();
+    private HashMap<String, BluetoothGattCharacteristic> NotifyChar = new HashMap<>();
+    private HashMap<String, BluetoothGattCharacteristic> DataChar = new HashMap<>();
+    private HashMap<String, BluetoothGattCharacteristic> DataDescriptionChar = new HashMap<>();
 
-    private BluetoothGattService MetadataService = null;
-    private BluetoothGattCharacteristic MetadataChar = null;
+    private HashMap<String, BluetoothGattService> MetadataService = new HashMap<>();
+    private HashMap<String, BluetoothGattCharacteristic> MetadataChar = new HashMap<>();
 
-    private Queue<BluetoothGattCharacteristic> CharFIFO = new LinkedList<>();
+    private Queue<Pair<BluetoothGatt, BluetoothGattCharacteristic>> CharFIFO = new LinkedList<>();
+    private final int maxCharFIFOsize = 100;
 
     private PowerManager.WakeLock wakeLock;
 
@@ -108,9 +113,9 @@ public class BLEService extends Service {
 
     // static service handlers
 
-    public static void startService(Context context, BluetoothDevice device) {
-        if(context == null || device == null) {
-            throw new Resources.NotFoundException("Cannot start service without context or device");
+    public static void startService(Context context, ArrayList<BluetoothDevice> devices) {
+        if(context == null || devices == null) {
+            throw new Resources.NotFoundException("Cannot start service without context or devices");
         }
 
         if (isRunning(context)) {
@@ -120,7 +125,12 @@ public class BLEService extends Service {
 
         // start service
         Intent serviceIntent = new Intent(context, BLEService.class);
-        serviceIntent.putExtra(BLEService.INTENT_EXTRA_BLE_DEVICE_ADDRESS, device.getAddress());
+
+        ArrayList<String> address = new ArrayList<>();
+        for (BluetoothDevice device : devices) {
+            address.add(device.getAddress());
+        }
+        serviceIntent.putStringArrayListExtra(BLEService.INTENT_EXTRA_BLE_DEVICE_ADDRESS, address);
         context.startService(serviceIntent);
     }
 
@@ -171,18 +181,20 @@ public class BLEService extends Service {
             throw new Resources.NotFoundException("BluetoothAdapter is not available in BLEService");
         }
 
-        // get BLE device
-        String deviceAddress = intent.getStringExtra(INTENT_EXTRA_BLE_DEVICE_ADDRESS);
-        BluetoothDevice mDevice = mBluetoothAdapter.getRemoteDevice(deviceAddress);
-        if (mDevice == null) {
-            broadcastUpdate(BLEService.BROADCAST_BLESERVICE_ERROR);
-            throw new Resources.NotFoundException("BLEDevice is not available in BLEService");
-        }
-
-        // connect to device
-        firstConnect = true;
+        // get BLE devices and connect
+        deviceAddress = intent.getStringArrayListExtra(BLEService.INTENT_EXTRA_BLE_DEVICE_ADDRESS);
+        firstConnect = deviceAddress.size();
         shouldReconnect = true;
-        mBluetoothGatt = mDevice.connectGatt(this, true, mGattCallback);
+
+        for (String address : deviceAddress) {
+            BluetoothDevice mDevice = mBluetoothAdapter.getRemoteDevice(address);
+            if (mDevice == null) {
+                broadcastUpdate(BLEService.BROADCAST_BLESERVICE_ERROR);
+                throw new Resources.NotFoundException("BLEDevice is not available");
+            }
+
+            mBluetoothGatt.put(mDevice.getAddress(), mDevice.connectGatt(this, true, mGattCallback));
+        }
 
         registerReceiver();
 
@@ -197,8 +209,10 @@ public class BLEService extends Service {
 
         shouldReconnect = false;
         unregisterReceiver();
-        if (mBluetoothGatt != null) {
-            mBluetoothGatt.close();
+        for (BluetoothGatt gatt : mBluetoothGatt.values()) {
+            if (gatt != null) {
+                gatt.close();
+            }
         }
 
         wakeLock.release();
@@ -248,18 +262,21 @@ public class BLEService extends Service {
         }
 
         if (characteristic != null) {
-            CharFIFO.add(characteristic);
+            CharFIFO.add(new Pair<>(gatt, characteristic));
         }
 
-        BluetoothGattCharacteristic newcharactersistic = CharFIFO.poll();
-        if (newcharactersistic == null) {
+        Pair<BluetoothGatt, BluetoothGattCharacteristic> gattchar = CharFIFO.poll();
+        if(gattchar == null) {
+            return;
+        }
+        if (gattchar.first == null || gattchar.second == null) {
             return;
         }
 
-        boolean allowed = gatt.readCharacteristic(newcharactersistic);
+        boolean allowed = gattchar.first.readCharacteristic(gattchar.second);
         if (!allowed) {
             Log.w(TAG, "No permission to read characteristic");
-            CharFIFO.add(newcharactersistic);
+            CharFIFO.add(gattchar);
         }
     }
 
@@ -290,8 +307,13 @@ public class BLEService extends Service {
         sendBroadcast(intent);
     }
 
+    private void broadcastUpdate(final String action, final String address) {
+        final Intent intent = new Intent(action);
+        intent.putExtra(BROADCAST_EXTRA_ADDRESS, address);
+        sendBroadcast(intent);
+    }
 
-    private void broadcastUpdate(final String action, final String data, final String address) {
+    private void broadcastUpdate(final String action, final String address, final String data) {
         final Intent intent = new Intent(action);
         intent.putExtra(BROADCAST_EXTRA_DATA, data);
         intent.putExtra(BROADCAST_EXTRA_ADDRESS, address);
@@ -310,14 +332,14 @@ public class BLEService extends Service {
                 case BluetoothProfile.STATE_CONNECTED:
                     Log.i(TAG, "Connected to GATT server");
                     intentAction = BROADCAST_GATT_CONNECTED;
-                    broadcastUpdate(intentAction);
+                    broadcastUpdate(intentAction, gatt.getDevice().getAddress());
                     gatt.discoverServices();
                     break;
 
                 case BluetoothProfile.STATE_DISCONNECTED:
                     Log.i(TAG, "Disconnected from GATT server");
                     intentAction = BROADCAST_GATT_DISCONNECTED;
-                    broadcastUpdate(intentAction);
+                    broadcastUpdate(intentAction, gatt.getDevice().getAddress());
                     if (shouldReconnect) {
                         Log.i(TAG, "Trying to reconnect to GATT server");
                         gatt.connect();
@@ -342,31 +364,38 @@ public class BLEService extends Service {
                     @Override
                     public void run() {
                         if (!hasRequiredServices(gatt)) {
-                            broadcastUpdate(BROADCAST_MISSING_SERVICE);
+                            broadcastUpdate(BROADCAST_MISSING_SERVICE, gatt.getDevice().getAddress());
                             return;
                         }
 
                         // services
-                        DataService = gatt.getService(DATA_SERVICE_UUID);
-                        MetadataService = gatt.getService(METADATA_SERVICE_UUID);
+                        BluetoothGattService dataservice = gatt.getService(DATA_SERVICE_UUID);
+                        DataService.put(gatt.getDevice().getAddress(), dataservice);
+                        BluetoothGattService metadataservice = gatt.getService(METADATA_SERVICE_UUID);
+                        MetadataService.put(gatt.getDevice().getAddress(), metadataservice);
 
                         // notify characterstic
-                        NotifyChar = DataService.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
-                        gatt.setCharacteristicNotification(NotifyChar, true);
-                        BluetoothGattDescriptor descriptor = NotifyChar.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
+                        BluetoothGattCharacteristic notifychar = dataservice.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
+                        NotifyChar.put(gatt.getDevice().getAddress(), notifychar);
+                        gatt.setCharacteristicNotification(notifychar, true);
+                        BluetoothGattDescriptor descriptor = notifychar.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
                         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                         gatt.writeDescriptor(descriptor);
 
                         // other characterstics
-                        DataChar = DataService.getCharacteristic(DATA_CHARACTERISTIC_UUID);
-                        DataDescriptionChar = DataService.getCharacteristic(DATADESCRIPTION_CHARACTERISTIC_UUID);
-                        MetadataChar = MetadataService.getCharacteristic(METADATA_CHARACTERISTIC_UUID);
+                        DataChar.put(gatt.getDevice().getAddress(), dataservice.getCharacteristic(DATA_CHARACTERISTIC_UUID));
+                        DataDescriptionChar.put(gatt.getDevice().getAddress(), dataservice.getCharacteristic(DATADESCRIPTION_CHARACTERISTIC_UUID));
+                        MetadataChar.put(gatt.getDevice().getAddress(), metadataservice.getCharacteristic(METADATA_CHARACTERISTIC_UUID));
 
-                        broadcastUpdate(BROADCAST_GATT_SERVICES_DISCOVERED);
+                        broadcastUpdate(BROADCAST_GATT_SERVICES_DISCOVERED, gatt.getDevice().getAddress());
+                        Log.i(TAG, "device " + gatt.getDevice().getAddress() + " connected");
 
-                        if (firstConnect) {
+                        if (firstConnect != 0) {
+                            firstConnect -= 1;
+                        }
+
+                        if (firstConnect == 0) {
                             broadcastUpdate(BROADCAST_FIRST_CONNECT);
-                            firstConnect = false;
                         }
                     }
                 });
@@ -379,44 +408,41 @@ public class BLEService extends Service {
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            if (characteristic.equals(NotifyChar)) {
-                if (CharFIFO.size() == 0) {
-                    readCharacteristic(gatt, DataChar);
+            if (NotifyChar.containsValue(characteristic)) {
+                if (CharFIFO.size() > maxCharFIFOsize) {
+                    Log.w(TAG, "CharFIFO has been cleared.");
+                    CharFIFO.clear();
                 }
-                else {
-                    Log.i(TAG, "CharFIFO size: " + String.valueOf(CharFIFO.size()));
-                    readCharacteristic(gatt, null);
-                }
-
+                readCharacteristic(gatt, DataChar.get(gatt.getDevice().getAddress()));
                 return;
             }
 
-            Log.w(TAG, "unhandled notification in onCharacteristicChanged()");
+            Log.w(TAG, "Unhandled notification with uuid: " + characteristic.getUuid().toString());
         }
 
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (characteristic.equals(DataChar)) {
+                if (DataChar.containsValue(characteristic)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE, data, gatt.getDevice().getAddress());
+                    broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE, gatt.getDevice().getAddress(), data);
                     return;
                 }
 
-                if (characteristic.equals(DataDescriptionChar)) {
+                if (DataDescriptionChar.containsValue(characteristic)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE, data, gatt.getDevice().getAddress());
+                    broadcastUpdate(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE, gatt.getDevice().getAddress(), data);
                     return;
                 }
 
-                if (characteristic.equals(MetadataChar)) {
+                if (MetadataChar.containsValue(characteristic)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE, data, gatt.getDevice().getAddress());
+                    broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE, gatt.getDevice().getAddress(), data);
                     return;
                 }
 
-                Log.w(TAG, "unhandled notification in onCharacteristicRead()");
+                Log.w(TAG, "Unhandled read with uuid: " + characteristic.getUuid().toString());
             }
             else {
                 Log.w(TAG, "Unhandled status in onCharacteristicRead(): " + status);
@@ -444,7 +470,11 @@ public class BLEService extends Service {
                     return;
                 }
 
-                CharFIFO.add(DataDescriptionChar);
+                for (String key : DataDescriptionChar.keySet()) {
+                    BluetoothGattCharacteristic datadeschar = DataDescriptionChar.get(key);
+                    BluetoothGatt gatt = mBluetoothGatt.get(key);
+                    CharFIFO.add(new Pair<>(gatt, datadeschar));
+                }
                 return;
             }
 
@@ -454,7 +484,11 @@ public class BLEService extends Service {
                     return;
                 }
 
-                CharFIFO.add(MetadataChar);
+                for (String key : MetadataChar.keySet()) {
+                    BluetoothGattCharacteristic metadatachar = MetadataChar.get(key);
+                    BluetoothGatt gatt = mBluetoothGatt.get(key);
+                    CharFIFO.add(new Pair<>(gatt, metadatachar));
+                }
                 return;
             }
 

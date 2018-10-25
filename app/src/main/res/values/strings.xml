@@ -24,7 +24,7 @@
     <string name="blebridge_button_connecting">Connecting</string>
     <string name="blebridge_switch_record">Recording</string>
     <string name="blebridge_switch_transmit">Transmitting</string>
-    <string name="blebridge_handler_device_address">Device Address:</string>
+    <string name="blebridge_handler_device_address">Address:</string>
     <string name="blebridge_ble_connection_status">BLE Status:</string>
     <string name="blebridge_gps_connection_status">GPS Status:</string>
     <string name="blebridge_stored_datapoints">Stored Datapoints:</string>
