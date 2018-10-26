@@ -6,12 +6,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import java.util.HashMap;
@@ -19,7 +17,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.UUID;
 
-import edu.teco.dustradar.R;
 import edu.teco.dustradar.blebridge.KeepAliveManager;
 import edu.teco.dustradar.data.DataObject;
 import edu.teco.dustradar.data.DataService;
@@ -274,14 +271,10 @@ public class HTTPService extends Service {
             }
 
             transmitMap.put(uuid, data);
-            Log.d(TAG, String.valueOf(transmitMap.size()));
 
             Context context = getApplicationContext();
-            STGenerator stgen = new STGenerator(context, data);
-
-            String key = getResources().getString(R.string.blebridge_pref_frosturl_key);
-            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            String sturl = sharedPref.getString(key, null);
+            STGenerator stgen = new STGenerator(data);
+            String sturl = data.getStURL();
 
             if (!CreatedThingIds.contains(stgen.getThing_id())) {
                 HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_THING,

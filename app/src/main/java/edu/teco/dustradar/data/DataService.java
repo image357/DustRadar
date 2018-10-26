@@ -6,9 +6,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import com.squareup.tape.QueueFile;
@@ -17,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
+import edu.teco.dustradar.R;
 import edu.teco.dustradar.blebridge.KeepAliveManager;
 import edu.teco.dustradar.bluetooth.BLEService;
 
@@ -286,7 +289,20 @@ public class DataService extends Service {
                 }
 
                 String msg = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_DATA);
-                DataObject data = new DataObject(msg);
+
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                String key = null;
+
+                key = getResources().getString(R.string.blebridge_pref_frosturl_key);
+                String sturl = sharedPref.getString(key, null);
+
+                key = getResources().getString(R.string.blebridge_pref_thing_id_key);
+                String tid = sharedPref.getString(key, null);
+
+                key = getResources().getString(R.string.blebridge_pref_pm_datastream_id_key);
+                String did = sharedPref.getString(key, null);
+
+                DataObject data = new DataObject(msg, sturl, tid, did, address);
                 // TODO: important: add ble address to dataobject for datastream id generation
                 if (data.isValid()) {
                     // store data

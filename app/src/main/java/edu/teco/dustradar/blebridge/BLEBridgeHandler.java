@@ -183,29 +183,6 @@ public class BLEBridgeHandler extends Fragment {
     }
 
 
-    private void registerHandlerReceiver() {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(DataService.BROADCAST_DATASERVICE_DATA_STORED);
-        filter.addAction(BLEService.BROADCAST_BLESERVICE_DATA_AVAILABLE);
-        filter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_CONNECTED);
-        filter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_DISCONNECTED);
-        filter.addAction(GPSService.BROADCAST_GPSSERVICE_LOCATION_AVAILABLE);
-        filter.addAction(HTTPService.BROADCAST_HTTPSERVICE_TIMEOUT);
-        filter.addAction(HTTPIntent.BROADCAST_HTTPINTENT_POST_SUCCESS);
-        getActivity().registerReceiver(mHandlerReceiver, filter);
-    }
-
-
-    private void unregisterHandlerReceiver() {
-        try {
-            getActivity().unregisterReceiver(mHandlerReceiver);
-        }
-        catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-    }
-
-
     // BroadcastReceivers
 
     private final BroadcastReceiver mHandlerReceiver = (new BroadcastReceiver() {
@@ -261,7 +238,37 @@ public class BLEBridgeHandler extends Fragment {
                 updateView();
                 return;
             }
+
+            if (HTTPService.BROADCAST_HTTPSERVICE_NOTHING_TO_TRANSMIT.equals(action)) {
+                lastViewUpdate = 0;
+                updateView();
+                return;
+            }
         }
     });
+
+    private void registerHandlerReceiver() {
+        IntentFilter filter = new IntentFilter();
+
+        filter.addAction(DataService.BROADCAST_DATASERVICE_DATA_STORED);
+        filter.addAction(BLEService.BROADCAST_BLESERVICE_DATA_AVAILABLE);
+        filter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_CONNECTED);
+        filter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_DISCONNECTED);
+        filter.addAction(GPSService.BROADCAST_GPSSERVICE_LOCATION_AVAILABLE);
+        filter.addAction(HTTPIntent.BROADCAST_HTTPINTENT_POST_SUCCESS);
+        filter.addAction(HTTPService.BROADCAST_HTTPSERVICE_TIMEOUT);
+        filter.addAction(HTTPService.BROADCAST_HTTPSERVICE_NOTHING_TO_TRANSMIT);
+
+        getActivity().registerReceiver(mHandlerReceiver, filter);
+    }
+
+    private void unregisterHandlerReceiver() {
+        try {
+            getActivity().unregisterReceiver(mHandlerReceiver);
+        }
+        catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

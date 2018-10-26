@@ -23,7 +23,6 @@ public class DataObject implements Serializable {
     private final static String TAG = DataObject.class.getSimpleName();
 
     // private members
-
     private ISODateInstance time = null;
     private double latitude = 0.0;
     private double longitude = 0.0;
@@ -32,6 +31,11 @@ public class DataObject implements Serializable {
     private HashMap<String, Double> data_map = null;
 
     private boolean isvalid = true;
+
+    private String sturl = null;
+    private String thingid = null;
+    private String datastreamid = null;
+    private String datastreamid_suffix = null;
 
     // constants
     private final String key_PM10 = "PM10";
@@ -43,28 +47,15 @@ public class DataObject implements Serializable {
 
     // constructors
 
-    public DataObject(String data) {
+    public DataObject(String data, String sturl, String thingid, String datastreamid, String dsidSuffix) {
         isvalid = true;
+        setTime(new ISODateInstance());
+        setLocation(GPSService.getLocation());
 
         setData(data);
-        time = new ISODateInstance();
-        Location location = GPSService.getLocation();
-        if (location != null) {
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-            height = location.getAltitude();
-        }
-        else {
-            isvalid = false;
-            latitude = 0.0;
-            longitude = 0.0;
-            height = 0.0;
-        }
-    }
-
-
-    public DataObject() {
-        this(null);
+        setStURL(sturl);
+        setThingid(thingid);
+        setDatastreamId(datastreamid, dsidSuffix);
     }
 
 
@@ -75,7 +66,7 @@ public class DataObject implements Serializable {
             return false;
         }
 
-        // TODO: check data
+        // TODO: make additional checks
 
         return true;
     }
@@ -90,7 +81,26 @@ public class DataObject implements Serializable {
     }
 
     public void setTime(ISODateInstance time) {
+        if (time == null) {
+            isvalid = false;
+        }
+
         this.time = time;
+    }
+
+
+    public void setLocation(Location location) {
+        if (location != null) {
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+            height = location.getAltitude();
+        }
+        else {
+            isvalid = false;
+            latitude = 0.0;
+            longitude = 0.0;
+            height = 0.0;
+        }
     }
 
 
@@ -126,8 +136,6 @@ public class DataObject implements Serializable {
     }
 
     public void setData(String data) {
-        isvalid = true;
-
         if (data != null) {
             this.data = data;
         }
@@ -146,6 +154,50 @@ public class DataObject implements Serializable {
             e.printStackTrace();
             isvalid = false;
         }
+    }
+
+
+    public String getStURL() {
+        return sturl;
+    }
+
+    public void setStURL(String sturl) {
+        if (sturl == null) {
+            isvalid = false;
+        }
+
+        this.sturl = sturl;
+    }
+
+
+    public String getThingId() {
+        return thingid;
+    }
+
+    public void setThingid(String thingid) {
+        if (thingid == null) {
+            isvalid = false;
+        }
+
+        this.thingid = thingid;
+    }
+
+
+    public String getDatastreamId() {
+        if (datastreamid_suffix == null) {
+            return datastreamid;
+        }
+
+        return (datastreamid + ":" + datastreamid_suffix);
+    }
+
+    public void setDatastreamId(String datastreamid, String suffix) {
+        if (datastreamid == null) {
+            isvalid = false;
+        }
+
+        this.datastreamid = datastreamid;
+        this.datastreamid_suffix = suffix;
     }
 
 

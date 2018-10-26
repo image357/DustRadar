@@ -49,6 +49,8 @@ public class BLEBridge extends AppCompatActivity {
     private long lastWarnConnection = 0;
     private final long minLastWarnConnection = 4000;
 
+    private boolean isInHandler = false;
+
 
     // request codes
     private final int BLE_ENABLE_REQUEST_CODE = 1;
@@ -77,6 +79,7 @@ public class BLEBridge extends AppCompatActivity {
         PreferenceManager.setDefaultValues(this, R.xml.fragment_blebridge_settings, false);
         inSettings = false;
 
+        isInHandler = false;
         BLEBridgeScan firstFragment = new BLEBridgeScan();
         firstFragment.setArguments(getIntent().getExtras());
         getSupportFragmentManager().beginTransaction()
@@ -232,12 +235,14 @@ public class BLEBridge extends AppCompatActivity {
                 }
             }), 1000);
 
-            ArrayList<String> deviceAddress = new ArrayList<>();
-            deviceAddress.add("None");
-            BLEBridgeDeviceSwitcher switcherFragment = BLEBridgeDeviceSwitcher.newInstance(deviceAddress);
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, switcherFragment);
-            transaction.commit();
+            if (!isInHandler) {
+                ArrayList<String> deviceAddress = new ArrayList<>();
+                deviceAddress.add("None");
+                BLEBridgeDeviceSwitcher switcherFragment = BLEBridgeDeviceSwitcher.newInstance(deviceAddress);
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                transaction.replace(R.id.fragment_container, switcherFragment);
+                transaction.commit();
+            }
 
             return true;
         }
@@ -282,6 +287,7 @@ public class BLEBridge extends AppCompatActivity {
     // public methods
 
     public void InitiateBLEConnection(ArrayList<BluetoothDevice> devices) {
+        isInHandler = true;
         this.devices = devices;
         startServices(devices);
 
@@ -391,6 +397,7 @@ public class BLEBridge extends AppCompatActivity {
                 for (BluetoothDevice device : devices) {
                     deviceAddress.add(device.getAddress());
                 }
+
                 BLEBridgeDeviceSwitcher switcherFragment = BLEBridgeDeviceSwitcher.newInstance(deviceAddress);
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container, switcherFragment);
