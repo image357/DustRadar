@@ -23,9 +23,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
-import java.util.Arrays;
-import java.util.List;
-
 import edu.teco.dustradar.blebridge.KeepAliveManager;
 
 
@@ -34,22 +31,16 @@ public class GPSService extends Service implements LocationListener {
     private final static String TAG = GPSService.class.getSimpleName();
 
     // broadcast actions
-    public final static String BROADCAST_LOCATION_PROVIDER_DISABLED = "BROADCAST_LOCATION_PROVIDER_DISABLED";
-    public final static String BROADCAST_LOCATION_AVAILABLE = "BROADCAST_LOCATION_AVAILABLE";
-
-    private final static List<String> allBroadcasts = Arrays.asList(
-            BROADCAST_LOCATION_PROVIDER_DISABLED
-    );
+    public final static String BROADCAST_GPSSERVICE_LOCATION_PROVIDER_DISABLED = "BROADCAST_GPSSERVICE_LOCATION_PROVIDER_DISABLED";
+    public final static String BROADCAST_GPSSERVICE_LOCATION_AVAILABLE = "BROADCAST_GPSSERVICE_LOCATION_AVAILABLE";
 
 
     // private members
-
     private PowerManager.WakeLock wakeLock;
     private LocationManager mManger;
 
 
     // static members
-
     private static Location mLocation = null;
 
 
@@ -155,7 +146,7 @@ public class GPSService extends Service implements LocationListener {
     public void onLocationChanged(Location location) {
         // TODO: make sophisticated location update
         mLocation = location;
-        broadcastUpdate(BROADCAST_LOCATION_AVAILABLE);
+        broadcastUpdate(BROADCAST_GPSSERVICE_LOCATION_AVAILABLE);
     }
 
     @Override
@@ -169,7 +160,7 @@ public class GPSService extends Service implements LocationListener {
     @Override
     public void onProviderDisabled(String provider)
     {
-        broadcastUpdate(BROADCAST_LOCATION_PROVIDER_DISABLED);
+        broadcastUpdate(BROADCAST_GPSSERVICE_LOCATION_PROVIDER_DISABLED);
     }
 
 
@@ -245,21 +236,10 @@ public class GPSService extends Service implements LocationListener {
     }
 
 
-    public static IntentFilter getIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-
-        for(String broadcast : allBroadcasts) {
-            intentFilter.addAction(broadcast);
-        }
-
-        return intentFilter;
-    }
-
-
     // private methods
 
     private void broadcastUpdate(final String action) {
-        final Intent intent = new Intent(action);
+        Intent intent = new Intent(action);
         sendBroadcast(intent);
     }
 

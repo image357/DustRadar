@@ -21,22 +21,21 @@ public class HTTPIntent extends IntentService {
     private final static String TAG = HTTPIntent.class.getSimpleName();
 
     // actions
-    private static final String ACTION_HTTP_POST_JSON = "edu.teco.dustradar.http.action.post.json";
-    private static final String ACTION_HTTP_GET_JSON = "edu.teco.dustradar.http.action.get.json";
+    private static final String ACTION_HTTPINTENT_POST_JSON = "ACTION_HTTPINTENT_POST_JSON";
+    private static final String ACTION_HTTPINTENT_GET_JSON = "ACTION_HTTPINTENT_GET_JSON";
 
     // parameters
-    public static final String EXTRA_URL = "edu.teco.dustradar.http.extra.url";
-    public static final String EXTRA_JSON = "edu.teco.dustradar.http.extra.json";
-    public static final String EXTRA_RESULT = "edu.teco.dustradar.http.extra.result";
-    public static final String EXTRA_BROADCAST = "edu.teco.dustradar.http.extra.broadcast";
+    public static final String EXTRA_HTTPINTENT_URL = "EXTRA_HTTPINTENT_URL";
+    public static final String EXTRA_HTTPINTENT_JSON = "EXTRA_HTTPINTENT_JSON";
+    public static final String EXTRA_HTTPINTENT_RESULT = "EXTRA_HTTPINTENT_RESULT";
+    public static final String EXTRA_HTTPINTENT_BROADCAST = "EXTRA_HTTPINTENT_BROADCAST";
 
     // broadcasts
-    public final static String BROADCAST_HTTP_POST_SUCCESS = "BROADCAST_HTTP_POST_SUCCESS";
-    public final static String BROADCAST_HTTP_POST_FAILURE = "BROADCAST_HTTP_POST_FAILURE";
+    public final static String BROADCAST_HTTPINTENT_POST_SUCCESS = "BROADCAST_HTTPINTENT_POST_SUCCESS";
+    public final static String BROADCAST_HTTPINTENT_POST_FAILURE = "BROADCAST_HTTPINTENT_POST_FAILURE";
 
 
     // private members
-
     private HttpURLConnection http = null;
 
 
@@ -52,19 +51,19 @@ public class HTTPIntent extends IntentService {
 
     public static void Post(Context context, String returnBroadcast, String url, String json) {
         Intent intent = new Intent(context, HTTPIntent.class);
-        intent.setAction(ACTION_HTTP_POST_JSON);
-        intent.putExtra(EXTRA_URL, url);
-        intent.putExtra(EXTRA_JSON, json);
-        intent.putExtra(EXTRA_BROADCAST, returnBroadcast);
+        intent.setAction(ACTION_HTTPINTENT_POST_JSON);
+        intent.putExtra(EXTRA_HTTPINTENT_URL, url);
+        intent.putExtra(EXTRA_HTTPINTENT_JSON, json);
+        intent.putExtra(EXTRA_HTTPINTENT_BROADCAST, returnBroadcast);
         context.startService(intent);
     }
 
 
     public static void GetJson(Context context, String returnBroadcast, String url) {
         Intent intent = new Intent(context, HTTPIntent.class);
-        intent.setAction(ACTION_HTTP_GET_JSON);
-        intent.putExtra(EXTRA_URL, url);
-        intent.putExtra(EXTRA_BROADCAST, returnBroadcast);
+        intent.setAction(ACTION_HTTPINTENT_GET_JSON);
+        intent.putExtra(EXTRA_HTTPINTENT_URL, url);
+        intent.putExtra(EXTRA_HTTPINTENT_BROADCAST, returnBroadcast);
         context.startService(intent);
     }
 
@@ -75,14 +74,14 @@ public class HTTPIntent extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
-            if (ACTION_HTTP_POST_JSON.equals(action)) {
-                final String url = intent.getStringExtra(EXTRA_URL);
-                final String json = intent.getStringExtra(EXTRA_JSON);
-                final String broadcast = intent.getStringExtra(EXTRA_BROADCAST);
+            if (ACTION_HTTPINTENT_POST_JSON.equals(action)) {
+                final String url = intent.getStringExtra(EXTRA_HTTPINTENT_URL);
+                final String json = intent.getStringExtra(EXTRA_HTTPINTENT_JSON);
+                final String broadcast = intent.getStringExtra(EXTRA_HTTPINTENT_BROADCAST);
                 handlePostJson(broadcast, url, json);
-            } else if (ACTION_HTTP_GET_JSON.equals(action)) {
-                final String url = intent.getStringExtra(EXTRA_URL);
-                final String broadcast = intent.getStringExtra(EXTRA_BROADCAST);
+            } else if (ACTION_HTTPINTENT_GET_JSON.equals(action)) {
+                final String url = intent.getStringExtra(EXTRA_HTTPINTENT_URL);
+                final String broadcast = intent.getStringExtra(EXTRA_HTTPINTENT_BROADCAST);
                 handleGetJson(broadcast, url);
             }
         }
@@ -101,9 +100,9 @@ public class HTTPIntent extends IntentService {
             result = "Exception: initHttp()";
             Log.e(TAG, result);
 
-            intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
-            intent.putExtra(EXTRA_BROADCAST, broadcast);
-            intent.putExtra(EXTRA_RESULT, result);
+            intent = new Intent(BROADCAST_HTTPINTENT_POST_FAILURE);
+            intent.putExtra(EXTRA_HTTPINTENT_BROADCAST, broadcast);
+            intent.putExtra(EXTRA_HTTPINTENT_RESULT, result);
             sendBroadcast(intent);
             return;
         }
@@ -124,27 +123,29 @@ public class HTTPIntent extends IntentService {
             try (OutputStream os = http.getOutputStream()) {
                 os.write(bytes);
                 String response;
+                int responseCode = http.getResponseCode();
 
-                switch (http.getResponseCode()) {
+                switch (responseCode) {
                     case 200:
                     case 201:
                         response = getHTTPResult(http.getInputStream());
                         result = "POST url success: " + url + "; Response: " + response;
-                        Log.i(TAG, result);
 
-                        intent = new Intent(BROADCAST_HTTP_POST_SUCCESS);
-                        intent.putExtra(EXTRA_BROADCAST, broadcast);
+                        intent = new Intent(BROADCAST_HTTPINTENT_POST_SUCCESS);
+                        intent.putExtra(EXTRA_HTTPINTENT_BROADCAST, broadcast);
                         sendBroadcast(intent);
                         break;
 
                     default:
                         response = getHTTPResult(http.getErrorStream());
-                        result = "POST url failure: " + url + "; Response code != 200: " + response;
+                        result = "POST url failure: " + url +
+                                "; Response code: " + String.valueOf(responseCode) +
+                                "; Response: " + response;
                         Log.w(TAG, result);
 
-                        intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
-                        intent.putExtra(EXTRA_BROADCAST, broadcast);
-                        intent.putExtra(EXTRA_RESULT, result);
+                        intent = new Intent(BROADCAST_HTTPINTENT_POST_FAILURE);
+                        intent.putExtra(EXTRA_HTTPINTENT_BROADCAST, broadcast);
+                        intent.putExtra(EXTRA_HTTPINTENT_RESULT, result);
                         sendBroadcast(intent);
                 }
             }
@@ -152,9 +153,9 @@ public class HTTPIntent extends IntentService {
                 result = "IOException for url: " + url;
                 Log.e(TAG, result);
 
-                intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
-                intent.putExtra(EXTRA_BROADCAST, broadcast);
-                intent.putExtra(EXTRA_RESULT, result);
+                intent = new Intent(BROADCAST_HTTPINTENT_POST_FAILURE);
+                intent.putExtra(EXTRA_HTTPINTENT_BROADCAST, broadcast);
+                intent.putExtra(EXTRA_HTTPINTENT_RESULT, result);
                 sendBroadcast(intent);
             }
         }
@@ -162,9 +163,9 @@ public class HTTPIntent extends IntentService {
             result = "Exception for url: " + url;
             Log.e(TAG, result);
 
-            intent = new Intent(BROADCAST_HTTP_POST_FAILURE);
-            intent.putExtra(EXTRA_BROADCAST, broadcast);
-            intent.putExtra(EXTRA_RESULT, result);
+            intent = new Intent(BROADCAST_HTTPINTENT_POST_FAILURE);
+            intent.putExtra(EXTRA_HTTPINTENT_BROADCAST, broadcast);
+            intent.putExtra(EXTRA_HTTPINTENT_RESULT, result);
             sendBroadcast(intent);
         }
         finally {
@@ -208,7 +209,7 @@ public class HTTPIntent extends IntentService {
             return true;
         }
         else {
-            final Intent intent = new Intent(HTTPService.BROADCAST_HTTP_TIMEOUT);
+            final Intent intent = new Intent(HTTPService.BROADCAST_HTTPSERVICE_TIMEOUT);
             sendBroadcast(intent);
             return false;
         }

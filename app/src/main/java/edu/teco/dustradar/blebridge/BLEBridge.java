@@ -44,7 +44,7 @@ public class BLEBridge extends AppCompatActivity {
     private boolean inSettings;
 
     private boolean shouldTimeout;
-    private final int timeoutTime = 10000;
+    private final int timeoutTime = 30000;
 
     private long lastWarnConnection = 0;
     private final long minLastWarnConnection = 4000;
@@ -226,10 +226,18 @@ public class BLEBridge extends AppCompatActivity {
             handler.postDelayed((new Runnable() {
                 @Override
                 public void run() {
-                    final Intent intent = new Intent(HTTPService.BROADCAST_START_TRANSMIT);
+                    final Intent intent = new Intent(HTTPService.BROADCAST_HTTPSERVICE_START_TRANSMIT);
+                    BLEBridgeHandler.isTransmitting = true;
                     context.sendBroadcast(intent);
                 }
             }), 1000);
+
+            ArrayList<String> deviceAddress = new ArrayList<>();
+            deviceAddress.add("None");
+            BLEBridgeDeviceSwitcher switcherFragment = BLEBridgeDeviceSwitcher.newInstance(deviceAddress);
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, switcherFragment);
+            transaction.commit();
 
             return true;
         }
@@ -364,6 +372,7 @@ public class BLEBridge extends AppCompatActivity {
         BLEService.stopService(this);
         GPSService.stopService(this);
         HTTPService.stopService(this);
+        BLEBridgeHandler.isTransmitting = false;
     }
 
 
@@ -374,14 +383,8 @@ public class BLEBridge extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if (BLEService.BROADCAST_FIRST_CONNECT.equals(action)) {
+            if (BLEService.BROADCAST_BLESERVICE_FIRST_CONNECT.equals(action)) {
                 shouldTimeout = false;
-
-                // get metadata
-                final Intent RMintent = new Intent(BLEService.BROADCAST_BLE_READ_METADATA);
-                sendBroadcast(RMintent);
-                final Intent RDintent = new Intent(BLEService.BROADCAST_BLE_READ_DATADESCRIPTION);
-                sendBroadcast(RDintent);
 
                 // start BLEBridgeHandler Fragment
                 ArrayList<String> deviceAddress = new ArrayList<>();
@@ -397,7 +400,7 @@ public class BLEBridge extends AppCompatActivity {
                 return;
             }
 
-            if (BLEService.BROADCAST_MISSING_SERVICE.equals(action)) {
+            if (BLEService.BROADCAST_BLESERVICE_GATT_MISSING_SERVICE.equals(action)) {
                 Log.w(TAG, "user selected unsupported device");
                 Toast.makeText(context, "You have to select a DustTracker device.",
                         Toast.LENGTH_LONG).show();
@@ -406,7 +409,7 @@ public class BLEBridge extends AppCompatActivity {
                 return;
             }
 
-            if (HTTPService.BROADCAST_HTTP_TIMEOUT.equals(action)) {
+            if (HTTPService.BROADCAST_HTTPSERVICE_TIMEOUT.equals(action)) {
                 warnConnection();
                 return;
             }
@@ -435,10 +438,10 @@ public class BLEBridge extends AppCompatActivity {
         intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_ERROR);
         intentFilter.addAction(DataService.BROADCAST_DATASERVICE_ERROR);
 
-        intentFilter.addAction(BLEService.BROADCAST_FIRST_CONNECT);
-        intentFilter.addAction(BLEService.BROADCAST_MISSING_SERVICE);
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_FIRST_CONNECT);
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_MISSING_SERVICE);
 
-        intentFilter.addAction(HTTPService.BROADCAST_HTTP_TIMEOUT);
+        intentFilter.addAction(HTTPService.BROADCAST_HTTPSERVICE_TIMEOUT);
 
         intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
 

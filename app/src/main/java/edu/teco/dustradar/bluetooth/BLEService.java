@@ -69,19 +69,22 @@ public class BLEService extends Service {
 
 
     // broadcasts
-    public final static String BROADCAST_GATT_CONNECTED = "BROADCAST_GATT_CONNECTED";
-    public final static String BROADCAST_GATT_DISCONNECTED = "BROADCAST_GATT_DISCONNECTED";
-    public final static String BROADCAST_GATT_SERVICES_DISCOVERED = "BROADCAST_GATT_SERVICES_DISCOVERED";
-    public final static String BROADCAST_BLE_DATA_AVAILABLE = "BROADCAST_BLE_DATA_AVAILABLE";
-    public final static String BROADCAST_EXTRA_DATA = "BROADCAST_EXTRA_DATA";
-    public final static String BROADCAST_EXTRA_ADDRESS = "BROADCAST_EXTRA_ADDRESS";
-    public final static String BROADCAST_BLE_READ_DATADESCRIPTION = "BROADCAST_BLE_READ_DATADESCRIPTION";
-    public final static String BROADCAST_BLE_DATADESCRIPTION_AVAILABLE = "BROADCAST_BLE_DATADESCRIPTION_AVAILABLE";
-    public final static String BROADCAST_BLE_READ_METADATA = "BROADCAST_BLE_READ_METADATA";
-    public final static String BROADCAST_BLE_METADATA_AVAILABLE = "BROADCAST_BLE_METADATA_AVAILABLE";
-    public final static String BROADCAST_MISSING_SERVICE = "BROADCAST_MISSING_SERVICE";
-    public final static String BROADCAST_FIRST_CONNECT = "BROADCAST_FIRST_CONNECT";
+    public final static String BROADCAST_BLESERVICE_GATT_CONNECTED = "BROADCAST_BLESERVICE_GATT_CONNECTED";
+    public final static String BROADCAST_BLESERVICE_GATT_DISCONNECTED = "BROADCAST_BLESERVICE_GATT_DISCONNECTED";
+    public final static String BROADCAST_BLESERVICE_GATT_SERVICES_DISCOVERED = "BROADCAST_BLESERVICE_GATT_SERVICES_DISCOVERED";
+    public final static String BROADCAST_BLESERVICE_GATT_MISSING_SERVICE = "BROADCAST_BLESERVICE_GATT_MISSING_SERVICE";
+
+    public final static String BROADCAST_BLESERVICE_FIRST_CONNECT = "BROADCAST_BLESERVICE_FIRST_CONNECT";
     public final static String BROADCAST_BLESERVICE_ERROR = "BROADCAST_BLESERVICE_ERROR";
+
+    public final static String BROADCAST_BLESERVICE_DATA_AVAILABLE = "BROADCAST_BLESERVICE_DATA_AVAILABLE";
+    public final static String BROADCAST_BLESERVICE_READ_DATADESCRIPTION = "BROADCAST_BLESERVICE_READ_DATADESCRIPTION";
+    public final static String BROADCAST_BLESERVICE_DATADESCRIPTION_AVAILABLE = "BROADCAST_BLESERVICE_DATADESCRIPTION_AVAILABLE";
+    public final static String BROADCAST_BLESERVICE_READ_METADATA = "BROADCAST_BLESERVICE_READ_METADATA";
+    public final static String BROADCAST_BLESERVICE_METADATA_AVAILABLE = "BROADCAST_BLESERVICE_METADATA_AVAILABLE";
+
+    public final static String EXTRA_BLESERVICE_DATA = "EXTRA_BLESERVICE_DATA";
+    public final static String EXTRA_BLESERVICE_ADDRESS = "EXTRA_BLESERVICE_ADDRESS";
 
 
     // private members
@@ -277,6 +280,7 @@ public class BLEService extends Service {
         if (!allowed) {
             Log.w(TAG, "No permission to read characteristic");
             CharFIFO.add(gattchar);
+            Log.i(TAG, "CharFIFO size: " + String.valueOf(CharFIFO.size()));
         }
     }
 
@@ -304,20 +308,20 @@ public class BLEService extends Service {
 
 
     private void broadcastUpdate(final String action) {
-        final Intent intent = new Intent(action);
+        Intent intent = new Intent(action);
         sendBroadcast(intent);
     }
 
     private void broadcastUpdate(final String action, final String address) {
-        final Intent intent = new Intent(action);
-        intent.putExtra(BROADCAST_EXTRA_ADDRESS, address);
+        Intent intent = new Intent(action);
+        intent.putExtra(EXTRA_BLESERVICE_ADDRESS, address);
         sendBroadcast(intent);
     }
 
     private void broadcastUpdate(final String action, final String address, final String data) {
-        final Intent intent = new Intent(action);
-        intent.putExtra(BROADCAST_EXTRA_DATA, data);
-        intent.putExtra(BROADCAST_EXTRA_ADDRESS, address);
+        Intent intent = new Intent(action);
+        intent.putExtra(EXTRA_BLESERVICE_DATA, data);
+        intent.putExtra(EXTRA_BLESERVICE_ADDRESS, address);
         sendBroadcast(intent);
     }
 
@@ -332,14 +336,14 @@ public class BLEService extends Service {
             switch (newState) {
                 case BluetoothProfile.STATE_CONNECTED:
                     Log.i(TAG, "Connected to GATT server");
-                    intentAction = BROADCAST_GATT_CONNECTED;
+                    intentAction = BROADCAST_BLESERVICE_GATT_CONNECTED;
                     broadcastUpdate(intentAction, gatt.getDevice().getAddress());
                     gatt.discoverServices();
                     break;
 
                 case BluetoothProfile.STATE_DISCONNECTED:
                     Log.i(TAG, "Disconnected from GATT server");
-                    intentAction = BROADCAST_GATT_DISCONNECTED;
+                    intentAction = BROADCAST_BLESERVICE_GATT_DISCONNECTED;
                     broadcastUpdate(intentAction, gatt.getDevice().getAddress());
                     if (shouldReconnect) {
                         Log.i(TAG, "Trying to reconnect to GATT server");
@@ -365,7 +369,7 @@ public class BLEService extends Service {
                     @Override
                     public void run() {
                         if (!hasRequiredServices(gatt)) {
-                            broadcastUpdate(BROADCAST_MISSING_SERVICE, gatt.getDevice().getAddress());
+                            broadcastUpdate(BROADCAST_BLESERVICE_GATT_MISSING_SERVICE, gatt.getDevice().getAddress());
                             return;
                         }
 
@@ -388,7 +392,7 @@ public class BLEService extends Service {
                         DataDescriptionChar.put(gatt.getDevice().getAddress(), dataservice.getCharacteristic(DATADESCRIPTION_CHARACTERISTIC_UUID));
                         MetadataChar.put(gatt.getDevice().getAddress(), metadataservice.getCharacteristic(METADATA_CHARACTERISTIC_UUID));
 
-                        broadcastUpdate(BROADCAST_GATT_SERVICES_DISCOVERED, gatt.getDevice().getAddress());
+                        broadcastUpdate(BROADCAST_BLESERVICE_GATT_SERVICES_DISCOVERED, gatt.getDevice().getAddress());
                         Log.i(TAG, "device " + gatt.getDevice().getAddress() + " connected");
 
                         if (firstConnect != 0) {
@@ -396,7 +400,7 @@ public class BLEService extends Service {
                         }
 
                         if (firstConnect == 0) {
-                            broadcastUpdate(BROADCAST_FIRST_CONNECT);
+                            broadcastUpdate(BROADCAST_BLESERVICE_FIRST_CONNECT);
                         }
                     }
                 });
@@ -427,19 +431,19 @@ public class BLEService extends Service {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (DataChar.containsValue(characteristic)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_DATA_AVAILABLE, gatt.getDevice().getAddress(), data);
+                    broadcastUpdate(BROADCAST_BLESERVICE_DATA_AVAILABLE, gatt.getDevice().getAddress(), data);
                     return;
                 }
 
                 if (DataDescriptionChar.containsValue(characteristic)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_DATADESCRIPTION_AVAILABLE, gatt.getDevice().getAddress(), data);
+                    broadcastUpdate(BROADCAST_BLESERVICE_DATADESCRIPTION_AVAILABLE, gatt.getDevice().getAddress(), data);
                     return;
                 }
 
                 if (MetadataChar.containsValue(characteristic)) {
                     String data = characteristic.getStringValue(0);
-                    broadcastUpdate(BROADCAST_BLE_METADATA_AVAILABLE, gatt.getDevice().getAddress(), data);
+                    broadcastUpdate(BROADCAST_BLESERVICE_METADATA_AVAILABLE, gatt.getDevice().getAddress(), data);
                     return;
                 }
 
@@ -465,30 +469,60 @@ public class BLEService extends Service {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if (BLEService.BROADCAST_BLE_READ_DATADESCRIPTION.equals(action)) {
+            if (BLEService.BROADCAST_BLESERVICE_READ_DATADESCRIPTION.equals(action)) {
                 if (mBluetoothGatt == null || DataDescriptionChar == null) {
                     Log.e(TAG, "Cannot read datadescription characterstic");
                     return;
                 }
 
-                for (String key : DataDescriptionChar.keySet()) {
-                    BluetoothGattCharacteristic datadeschar = DataDescriptionChar.get(key);
-                    BluetoothGatt gatt = mBluetoothGatt.get(key);
-                    CharFIFO.add(new Pair<>(gatt, datadeschar));
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
+                if (address == null) {
+                    // read all
+                    for (String key : DataDescriptionChar.keySet()) {
+                        BluetoothGattCharacteristic readchar = DataDescriptionChar.get(key);
+                        BluetoothGatt gatt = mBluetoothGatt.get(key);
+                        CharFIFO.add(new Pair<>(gatt, readchar));
+                    }
+                }
+                else {
+                    BluetoothGattCharacteristic readchar = DataDescriptionChar.get(address);
+                    BluetoothGatt gatt = mBluetoothGatt.get(address);
+
+                    if (gatt == null || readchar == null) {
+                        Log.w(TAG, "No connection to device with address: " + address);
+                        return;
+                    }
+
+                    CharFIFO.add(new Pair<>(gatt, readchar));
                 }
                 return;
             }
 
-            if (BLEService.BROADCAST_BLE_READ_METADATA.equals(action)) {
+            if (BLEService.BROADCAST_BLESERVICE_READ_METADATA.equals(action)) {
                 if (mBluetoothGatt == null || MetadataChar == null) {
                     Log.e(TAG, "Cannot read metadata characterstic");
                     return;
                 }
 
-                for (String key : MetadataChar.keySet()) {
-                    BluetoothGattCharacteristic metadatachar = MetadataChar.get(key);
-                    BluetoothGatt gatt = mBluetoothGatt.get(key);
-                    CharFIFO.add(new Pair<>(gatt, metadatachar));
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
+                if (address == null) {
+                    // read all
+                    for (String key : MetadataChar.keySet()) {
+                        BluetoothGattCharacteristic readchar = MetadataChar.get(key);
+                        BluetoothGatt gatt = mBluetoothGatt.get(key);
+                        CharFIFO.add(new Pair<>(gatt, readchar));
+                    }
+                }
+                else {
+                    BluetoothGattCharacteristic readchar = MetadataChar.get(address);
+                    BluetoothGatt gatt = mBluetoothGatt.get(address);
+
+                    if (gatt == null || readchar == null) {
+                        Log.w(TAG, "No connection to device with address: " + address);
+                        return;
+                    }
+
+                    CharFIFO.add(new Pair<>(gatt, readchar));
                 }
                 return;
             }
@@ -503,8 +537,8 @@ public class BLEService extends Service {
     private void registerReceiver() {
         IntentFilter intentFilter = new IntentFilter();
 
-        intentFilter.addAction(BLEService.BROADCAST_BLE_READ_DATADESCRIPTION);
-        intentFilter.addAction(BLEService.BROADCAST_BLE_READ_METADATA);
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_READ_DATADESCRIPTION);
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_READ_METADATA);
 
         intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
 

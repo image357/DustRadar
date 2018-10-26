@@ -69,24 +69,48 @@ public class STGenerator {
         return thing.toJson();
     }
 
+    public String getThing_id() {
+        return thing.getId();
+    }
+
     public String getDatastream_PM10() {
         return datastream_PM10.toJson();
+    }
+
+    public String getDatastream_PM10_id() {
+        return datastream_PM10.getId();
     }
 
     public String getDatastream_PM25() {
         return datastream_PM25.toJson();
     }
 
+    public String getDatastream_PM25_id() {
+        return datastream_PM25.getId();
+    }
+
     public String getSensor_SDS011() {
         return sensor_SDS011.toJson();
+    }
+
+    public String getSensor_SDS011_id() {
+        return sensor_SDS011.getId();
     }
 
     public String getObservedProperty_PM10() {
         return observedProperty_PM10.toJson();
     }
 
+    public String getObservedProperty_PM10_id() {
+        return observedProperty_PM10.getId();
+    }
+
     public String getObservedProperty_PM25() {
         return observedProperty_PM25.toJson();
+    }
+
+    public String getObservedProperty_PM25_id() {
+        return observedProperty_PM25.getId();
     }
 
     public String getEvent_PM10() {

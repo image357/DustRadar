@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,12 +35,13 @@ public class BLEBridgeHandler extends Fragment {
     // private members
     private Switch recordingSwtich;
     private Switch transmittingSwitch;
+    public static boolean isTransmitting = false;
 
     // view updates
     private TextView tvDeviceAddress;
 
     private TextView tvBLEConnectionStatus;
-    private String bleConnectionStatus = "Connected";
+    private String bleConnectionStatus = "Disconnected";
 
     private TextView tvGPSConnectionStatus;
     private String gpsConnectionStatus = "Unavailable";
@@ -77,15 +77,12 @@ public class BLEBridgeHandler extends Fragment {
         if (getArguments() != null) {
             deviceAddress = getArguments().getString(ARG_DEVICEADDRESS);
         }
-
-        Log.i(TAG, "onCreate() for " + deviceAddress);
     }
 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.i(TAG, "onCreateView() for " + deviceAddress);
         View rootView;
         rootView = inflater.inflate(R.layout.fragment_blebridge_handler, container, false);
 
@@ -108,7 +105,6 @@ public class BLEBridgeHandler extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.i(TAG, "onResume() for " + deviceAddress);
 
         updateView();
         registerHandlerReceiver();
@@ -119,7 +115,6 @@ public class BLEBridgeHandler extends Fragment {
     public void onPause() {
         unregisterHandlerReceiver();
 
-        Log.i(TAG, "onPause() for " + deviceAddress);
         super.onPause();
     }
 
@@ -128,11 +123,13 @@ public class BLEBridgeHandler extends Fragment {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
-                final Intent intent = new Intent(DataService.BROADCAST_DATA_START_RECORDING);
+                Intent intent = new Intent(DataService.BROADCAST_DATASERVICE_START_RECORDING);
+                intent.putExtra(DataService.EXTRA_DATASERVICE_ADDRESS, deviceAddress);
                 getActivity().sendBroadcast(intent);
             }
             else {
-                final Intent intent = new Intent(DataService.BROADCAST_DATA_STOP_RECORDING);
+                final Intent intent = new Intent(DataService.BROADCAST_DATASERVICE_STOP_RECORDING);
+                intent.putExtra(DataService.EXTRA_DATASERVICE_ADDRESS, deviceAddress);
                 getActivity().sendBroadcast(intent);
             }
         }
@@ -142,12 +139,15 @@ public class BLEBridgeHandler extends Fragment {
     private CompoundButton.OnCheckedChangeListener onTransmittingSwitchChange = (new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            isTransmitting = isChecked;
             if (isChecked) {
-                final Intent intent = new Intent(HTTPService.BROADCAST_START_TRANSMIT);
+                Intent intent = new Intent(HTTPService.BROADCAST_HTTPSERVICE_START_TRANSMIT);
+                intent.putExtra(DataService.EXTRA_DATASERVICE_ADDRESS, deviceAddress);
                 getActivity().sendBroadcast(intent);
             }
             else {
-                final Intent intent = new Intent(HTTPService.BROADCAST_STOP_TRANSMIT);
+                Intent intent = new Intent(HTTPService.BROADCAST_HTTPSERVICE_STOP_TRANSMIT);
+                intent.putExtra(DataService.EXTRA_DATASERVICE_ADDRESS, deviceAddress);
                 getActivity().sendBroadcast(intent);
             }
         }
@@ -178,18 +178,20 @@ public class BLEBridgeHandler extends Fragment {
 
         temp = getResources().getString(R.string.blebridge_last_data);
         tvLastData.setText(temp + "   " + lastData);
+
+        transmittingSwitch.setChecked(isTransmitting);
     }
 
 
     private void registerHandlerReceiver() {
         IntentFilter filter = new IntentFilter();
-        filter.addAction(DataService.BROADCAST_DATA_STORED);
-        filter.addAction(BLEService.BROADCAST_BLE_DATA_AVAILABLE);
-        filter.addAction(BLEService.BROADCAST_GATT_CONNECTED);
-        filter.addAction(BLEService.BROADCAST_GATT_DISCONNECTED);
-        filter.addAction(GPSService.BROADCAST_LOCATION_AVAILABLE);
-        filter.addAction(HTTPService.BROADCAST_HTTP_TIMEOUT);
-        filter.addAction(HTTPIntent.BROADCAST_HTTP_POST_SUCCESS);
+        filter.addAction(DataService.BROADCAST_DATASERVICE_DATA_STORED);
+        filter.addAction(BLEService.BROADCAST_BLESERVICE_DATA_AVAILABLE);
+        filter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_CONNECTED);
+        filter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_DISCONNECTED);
+        filter.addAction(GPSService.BROADCAST_GPSSERVICE_LOCATION_AVAILABLE);
+        filter.addAction(HTTPService.BROADCAST_HTTPSERVICE_TIMEOUT);
+        filter.addAction(HTTPIntent.BROADCAST_HTTPINTENT_POST_SUCCESS);
         getActivity().registerReceiver(mHandlerReceiver, filter);
     }
 
@@ -212,22 +214,22 @@ public class BLEBridgeHandler extends Fragment {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if (DataService.BROADCAST_DATA_STORED.equals(action)) {
+            if (DataService.BROADCAST_DATASERVICE_DATA_STORED.equals(action)) {
                 updateView();
                 return;
             }
 
-            if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
-                String address = intent.getStringExtra(BLEService.BROADCAST_EXTRA_ADDRESS);
+            if (BLEService.BROADCAST_BLESERVICE_DATA_AVAILABLE.equals(action)) {
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
                 if (deviceAddress.equals(address)) {
-                    lastData = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                    lastData = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_DATA);
                     updateView();
                 }
                 return;
             }
 
-            if (BLEService.BROADCAST_GATT_CONNECTED.equals(action)) {
-                String address = intent.getStringExtra(BLEService.BROADCAST_EXTRA_ADDRESS);
+            if (BLEService.BROADCAST_BLESERVICE_GATT_CONNECTED.equals(action)) {
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
                 if (deviceAddress.equals(address)) {
                     bleConnectionStatus = "Connected";
                     updateView();
@@ -235,8 +237,8 @@ public class BLEBridgeHandler extends Fragment {
                 return;
             }
 
-            if (BLEService.BROADCAST_GATT_DISCONNECTED.equals(action)) {
-                String address = intent.getStringExtra(BLEService.BROADCAST_EXTRA_ADDRESS);
+            if (BLEService.BROADCAST_BLESERVICE_GATT_DISCONNECTED.equals(action)) {
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
                 if (deviceAddress.equals(address)) {
                     bleConnectionStatus = "Disconnected";
                     updateView();
@@ -244,18 +246,18 @@ public class BLEBridgeHandler extends Fragment {
                 return;
             }
 
-            if (GPSService.BROADCAST_LOCATION_AVAILABLE.equals(action)) {
+            if (GPSService.BROADCAST_GPSSERVICE_LOCATION_AVAILABLE.equals(action)) {
                 gpsConnectionStatus = "Available";
                 updateView();
                 return;
             }
 
-            if (HTTPIntent.BROADCAST_HTTP_POST_SUCCESS.equals(action)) {
+            if (HTTPIntent.BROADCAST_HTTPINTENT_POST_SUCCESS.equals(action)) {
                 updateView();
                 return;
             }
 
-            if (HTTPService.BROADCAST_HTTP_TIMEOUT.equals(action)) {
+            if (HTTPService.BROADCAST_HTTPSERVICE_TIMEOUT.equals(action)) {
                 updateView();
                 return;
             }

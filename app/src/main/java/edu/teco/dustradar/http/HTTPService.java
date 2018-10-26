@@ -15,6 +15,7 @@ import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -28,25 +29,25 @@ public class HTTPService extends Service {
     private final static String TAG = HTTPService.class.getSimpleName();
 
     // broadcasts
-    public final static String BROADCAST_START_TRANSMIT = "BROADCAST_START_TRANSMIT";
-    public final static String BROADCAST_STOP_TRANSMIT = "BROADCAST_STOP_TRANSMIT";
-    public final static String BROADCAST_HTTP_TIMEOUT = "BROADCAST_HTTP_TIMEOUT";
+    public final static String BROADCAST_HTTPSERVICE_START_TRANSMIT = "BROADCAST_HTTPSERVICE_START_TRANSMIT";
+    public final static String BROADCAST_HTTPSERVICE_STOP_TRANSMIT = "BROADCAST_HTTPSERVICE_STOP_TRANSMIT";
+    public final static String BROADCAST_HTTPSERVICE_NOTHING_TO_TRANSMIT = "BROADCAST_HTTPSERVICE_NOTHING_TO_TRANSMIT";
+    public final static String BROADCAST_HTTPSERVICE_TIMEOUT = "BROADCAST_HTTPSERVICE_TIMEOUT";
 
     // actions
-    public final static String ACTION_POST_THING = "ACTION_POST_THING";
-    public final static String ACTION_POST_DATASTREAM = "ACTION_POST_DATASTREAM";
-    public final static String ACTION_POST_SENSOR = "ACTION_POST_SENSOR";
-    public final static String ACTION_POST_OBSERVEDPROPERTY = "ACTION_POST_OBSERVEDPROPERTY";
+    public final static String ACTION_HTTPSERVICE_POST_THING = "ACTION_HTTPSERVICE_POST_THING";
+    public final static String ACTION_HTTPSERVICE_POST_DATASTREAM = "ACTION_HTTPSERVICE_POST_DATASTREAM";
+    public final static String ACTION_HTTPSERVICE_POST_SENSOR = "ACTION_HTTPSERVICE_POST_SENSOR";
+    public final static String ACTION_HTTPSERVICE_POST_OBSERVEDPROPERTY = "ACTION_HTTPSERVICE_POST_OBSERVEDPROPERTY";
 
 
     // private members
-
     private PowerManager.WakeLock wakeLock;
     private boolean shouldTransmit;
     private Handler handler;
 
     private HashMap<String, DataObject> transmitMap;
-
+    private final int maxTransmitMapSize = 100;
 
     // constructors
 
@@ -150,7 +151,7 @@ public class HTTPService extends Service {
     // private methods
 
     private void broadcastUpdate(final String action) {
-        final Intent intent = new Intent(action);
+        Intent intent = new Intent(action);
         sendBroadcast(intent);
     }
 
@@ -162,23 +163,23 @@ public class HTTPService extends Service {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if (HTTPService.BROADCAST_START_TRANSMIT.equals(action)) {
+            if (HTTPService.BROADCAST_HTTPSERVICE_START_TRANSMIT.equals(action)) {
                 if (shouldTransmit == false) {
-                    Log.i(TAG, "Transmission started");
                     shouldTransmit = true;
                     handler.postDelayed(transmitRunnable, 100);
+                    Log.i(TAG, "Transmission started");
                 }
                 return;
             }
 
-            if (HTTPService.BROADCAST_STOP_TRANSMIT.equals(action)) {
-                Log.i(TAG, "Transmission stopped");
+            if (HTTPService.BROADCAST_HTTPSERVICE_STOP_TRANSMIT.equals(action)) {
                 shouldTransmit = false;
+                Log.i(TAG, "Transmission stopped");
                 return;
             }
 
-            if (HTTPIntent.BROADCAST_HTTP_POST_FAILURE.equals(action)) {
-                String uuid = intent.getStringExtra(HTTPIntent.EXTRA_BROADCAST);
+            if (HTTPIntent.BROADCAST_HTTPINTENT_POST_FAILURE.equals(action)) {
+                String uuid = intent.getStringExtra(HTTPIntent.EXTRA_HTTPINTENT_BROADCAST);
                 if (uuid == null) {
                     return;
                 }
@@ -190,13 +191,13 @@ public class HTTPService extends Service {
                 DataObject data = transmitMap.remove(uuid);
                 DataService.add(data);
 
-                final Intent bIntent = new Intent(BROADCAST_HTTP_TIMEOUT);
+                final Intent bIntent = new Intent(BROADCAST_HTTPSERVICE_TIMEOUT);
                 sendBroadcast(bIntent);
                 return;
             }
 
-            if (HTTPIntent.BROADCAST_HTTP_POST_SUCCESS.equals(action)) {
-                String uuid = intent.getStringExtra(HTTPIntent.EXTRA_BROADCAST);
+            if (HTTPIntent.BROADCAST_HTTPINTENT_POST_SUCCESS.equals(action)) {
+                String uuid = intent.getStringExtra(HTTPIntent.EXTRA_HTTPINTENT_BROADCAST);
                 if (uuid == null) {
                     return;
                 }
@@ -218,11 +219,11 @@ public class HTTPService extends Service {
     private void registerReceiver() {
         IntentFilter intentFilter = new IntentFilter();
 
-        intentFilter.addAction(HTTPService.BROADCAST_START_TRANSMIT);
-        intentFilter.addAction(HTTPService.BROADCAST_STOP_TRANSMIT);
+        intentFilter.addAction(HTTPService.BROADCAST_HTTPSERVICE_START_TRANSMIT);
+        intentFilter.addAction(HTTPService.BROADCAST_HTTPSERVICE_STOP_TRANSMIT);
 
-        intentFilter.addAction(HTTPIntent.BROADCAST_HTTP_POST_FAILURE);
-        intentFilter.addAction(HTTPIntent.BROADCAST_HTTP_POST_SUCCESS);
+        intentFilter.addAction(HTTPIntent.BROADCAST_HTTPINTENT_POST_FAILURE);
+        intentFilter.addAction(HTTPIntent.BROADCAST_HTTPINTENT_POST_SUCCESS);
 
         intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
 
@@ -242,54 +243,95 @@ public class HTTPService extends Service {
     // transmission
 
     private Runnable transmitRunnable = (new Runnable() {
+        private HashSet<String> CreatedThingIds = new HashSet<>();
+        private HashSet<String> CreatedSensorIds = new HashSet<>();
+        private HashSet<String> CreatedObservedPropertyIds = new HashSet<>();
+        private HashSet<String> CreatedDatastreamIds = new HashSet<>();
+
         @Override
         public void run() {
-            if (shouldTransmit) {
-                DataObject data = null;
-                String uuid = null;
-                if (DataService.size() != 0) {
-                    data = DataService.poll();
-                    uuid = UUID.randomUUID().toString();
-                }
-
-                if (data != null && data.isValid()) {
-                    Log.i(TAG, "Transmitting data to SensorThings server");
-
-                    transmitMap.put(uuid, data);
-
-                    Context context = getApplicationContext();
-                    STGenerator stgen = new STGenerator(context, data);
-
-                    String key = getResources().getString(R.string.blebridge_pref_frosturl_key);
-                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                    String sturl = sharedPref.getString(key, null);
-
-                    HTTPIntent.Post(context, ACTION_POST_THING,
-                            sturl + "/v1.0/Things", stgen.getThing());
-                    HTTPIntent.Post(context, ACTION_POST_SENSOR,
-                            sturl + "/v1.0/Sensors", stgen.getSensor_SDS011());
-                    HTTPIntent.Post(context, ACTION_POST_OBSERVEDPROPERTY,
-                            sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_PM10());
-                    HTTPIntent.Post(context, ACTION_POST_OBSERVEDPROPERTY,
-                            sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_PM25());
-
-                    HTTPIntent.Post(context, ACTION_POST_DATASTREAM,
-                            sturl + "/v1.0/Datastreams", stgen.getDatastream_PM10());
-                    HTTPIntent.Post(context, ACTION_POST_DATASTREAM,
-                            sturl + "/v1.0/Datastreams", stgen.getDatastream_PM25());
-
-                    HTTPIntent.Post(context, uuid,
-                            sturl + "/v1.0/Observations", stgen.getEvent_PM10());
-                    HTTPIntent.Post(context, uuid,
-                            sturl + "/v1.0/Observations", stgen.getEvent_PM25());
-                }
-
-                long postDelay = 100;
-                if (DataService.size() == 0) {
-                    postDelay += 5000;
-                }
-                handler.postDelayed(transmitRunnable, postDelay);
+            if (!shouldTransmit) {
+                restartRunnable(1000);
+                return;
             }
+
+            if (transmitMap.size() > maxTransmitMapSize) {
+                restartRunnable(1000);
+                return;
+            }
+
+            if (DataService.size() == 0) {
+                broadcastUpdate(HTTPService.BROADCAST_HTTPSERVICE_NOTHING_TO_TRANSMIT);
+                restartRunnable(5000);
+                return;
+            }
+
+            DataObject data = DataService.poll();
+            String uuid = UUID.randomUUID().toString();
+            if (data == null || !data.isValid()) {
+                restartRunnable(1000);
+                return;
+            }
+
+            transmitMap.put(uuid, data);
+            Log.d(TAG, String.valueOf(transmitMap.size()));
+
+            Context context = getApplicationContext();
+            STGenerator stgen = new STGenerator(context, data);
+
+            String key = getResources().getString(R.string.blebridge_pref_frosturl_key);
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String sturl = sharedPref.getString(key, null);
+
+            if (!CreatedThingIds.contains(stgen.getThing_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_THING,
+                        sturl + "/v1.0/Things", stgen.getThing());
+                CreatedThingIds.add(stgen.getThing_id());
+            }
+
+            if (!CreatedSensorIds.contains(stgen.getSensor_SDS011_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_SENSOR,
+                        sturl + "/v1.0/Sensors", stgen.getSensor_SDS011());
+                CreatedSensorIds.add(stgen.getSensor_SDS011_id());
+            }
+
+            if (!CreatedObservedPropertyIds.contains(stgen.getObservedProperty_PM10_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_OBSERVEDPROPERTY,
+                        sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_PM10());
+                CreatedObservedPropertyIds.add(stgen.getObservedProperty_PM10_id());
+            }
+
+            if (!CreatedObservedPropertyIds.contains(stgen.getObservedProperty_PM25_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_OBSERVEDPROPERTY,
+                        sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_PM25());
+                CreatedObservedPropertyIds.add(stgen.getObservedProperty_PM25_id());
+            }
+
+            if (!CreatedDatastreamIds.contains(stgen.getDatastream_PM10_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_DATASTREAM,
+                        sturl + "/v1.0/Datastreams", stgen.getDatastream_PM10());
+                CreatedDatastreamIds.add(stgen.getDatastream_PM10_id());
+            }
+
+            if (!CreatedDatastreamIds.contains(stgen.getDatastream_PM25_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_DATASTREAM,
+                        sturl + "/v1.0/Datastreams", stgen.getDatastream_PM25());
+                CreatedDatastreamIds.add(stgen.getDatastream_PM25_id());
+            }
+
+            HTTPIntent.Post(context, uuid,
+                    sturl + "/v1.0/Observations", stgen.getEvent_PM10());
+            HTTPIntent.Post(context, uuid,
+                    sturl + "/v1.0/Observations", stgen.getEvent_PM25());
+
+            restartRunnable(20);
+        }
+
+
+        // private methods
+
+        private void restartRunnable(long delay) {
+            handler.postDelayed(transmitRunnable, delay);
         }
     });
 

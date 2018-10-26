@@ -15,6 +15,7 @@ import com.squareup.tape.QueueFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import edu.teco.dustradar.blebridge.KeepAliveManager;
 import edu.teco.dustradar.bluetooth.BLEService;
@@ -25,10 +26,14 @@ public class DataService extends Service {
     private final static String TAG = DataService.class.getSimpleName();
 
     // broadcasts
-    public final static String BROADCAST_DATA_START_RECORDING = "BROADCAST_DATA_START_RECORDING";
-    public final static String BROADCAST_DATA_STOP_RECORDING = "BROADCAST_DATA_STOP_RECORDING";
-    public final static String BROADCAST_DATA_STORED = "BROADCAST_DATA_STORED";
     public final static String BROADCAST_DATASERVICE_ERROR = "BROADCAST_DATASERVICE_ERROR";
+
+    public final static String BROADCAST_DATASERVICE_START_RECORDING = "BROADCAST_DATASERVICE_START_RECORDING";
+    public final static String BROADCAST_DATASERVICE_STOP_RECORDING = "BROADCAST_DATASERVICE_STOP_RECORDING";
+
+    public final static String BROADCAST_DATASERVICE_DATA_STORED = "BROADCAST_DATASERVICE_DATA_STORED";
+
+    public final static String EXTRA_DATASERVICE_ADDRESS = "EXTRA_DATASERVICE_ADDRESS";
 
 
     // static members
@@ -36,7 +41,7 @@ public class DataService extends Service {
 
     // private members
     private PowerManager.WakeLock wakeLock;
-    private boolean shouldRecord;
+    private HashMap<String, Boolean> shouldRecord;
 
     private final String fileName = "DataQueue";
 
@@ -96,7 +101,7 @@ public class DataService extends Service {
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DustRadar::DataService::Wakelock");
         wakeLock.acquire();
 
-        shouldRecord = false;
+        shouldRecord = new HashMap<>();
         openQueueFile();
         registerReceiver();
 
@@ -108,7 +113,7 @@ public class DataService extends Service {
     @Override public void onDestroy() {
         Log.i(TAG, "DataService destroyed");
 
-        shouldRecord = false;
+        shouldRecord.clear();
         unregisterReceiver();
         closeQueueFile();
 
@@ -209,7 +214,13 @@ public class DataService extends Service {
     // private methods
 
     private void broadcastUpdate(final String action) {
-        final Intent intent = new Intent(action);
+        Intent intent = new Intent(action);
+        sendBroadcast(intent);
+    }
+
+    private void broadcastUpdate(final String action, final String address) {
+        Intent intent = new Intent(action);
+        intent.putExtra(DataService.EXTRA_DATASERVICE_ADDRESS, address);
         sendBroadcast(intent);
     }
 
@@ -246,18 +257,25 @@ public class DataService extends Service {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if (DataService.BROADCAST_DATA_START_RECORDING.equals(action)) {
-                shouldRecord = true;
+            if (DataService.BROADCAST_DATASERVICE_START_RECORDING.equals(action)) {
+                String address = intent.getStringExtra(DataService.EXTRA_DATASERVICE_ADDRESS);
+                shouldRecord.put(address, true);
                 return;
             }
 
-            if (DataService.BROADCAST_DATA_STOP_RECORDING.equals(action)) {
-                shouldRecord = false;
+            if (DataService.BROADCAST_DATASERVICE_STOP_RECORDING.equals(action)) {
+                String address = intent.getStringExtra(DataService.EXTRA_DATASERVICE_ADDRESS);
+                shouldRecord.put(address, false);
                 return;
             }
 
-            if (BLEService.BROADCAST_BLE_DATA_AVAILABLE.equals(action)) {
-                if (shouldRecord == false) {
+            if (BLEService.BROADCAST_BLESERVICE_DATA_AVAILABLE.equals(action)) {
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
+                if (shouldRecord.containsKey(address) == false) {
+                    return;
+                }
+
+                if (shouldRecord.get(address) == false) {
                     return;
                 }
 
@@ -267,7 +285,7 @@ public class DataService extends Service {
                     return;
                 }
 
-                String msg = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
+                String msg = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_DATA);
                 DataObject data = new DataObject(msg);
                 // TODO: important: add ble address to dataobject for datastream id generation
                 if (data.isValid()) {
@@ -275,27 +293,30 @@ public class DataService extends Service {
                     try {
                         byte[] bytes = DataObject.serialize(data);
                         queueFile.add(bytes);
-                        broadcastUpdate(BROADCAST_DATA_STORED);
+                        broadcastUpdate(BROADCAST_DATASERVICE_DATA_STORED, address);
                     }
                     catch (Exception e) {
                         e.printStackTrace();
                         Log.e(TAG, "Cannot serialze or save data");
+                        // TODO: print message for dataservice error
                         broadcastUpdate(DataService.BROADCAST_DATASERVICE_ERROR);
                     }
                 }
                 return;
             }
 
-            if (BLEService.BROADCAST_BLE_DATADESCRIPTION_AVAILABLE.equals(action)) {
-                String msg = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
-                Log.d(TAG, "datadescription: " + msg);
+            if (BLEService.BROADCAST_BLESERVICE_DATADESCRIPTION_AVAILABLE.equals(action)) {
+                String msg = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_DATA);
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
+                Log.d(TAG, "device: " + address + " - datadescription: " + msg);
                 // TODO: handle datadescription
                 return;
             }
 
-            if (BLEService.BROADCAST_BLE_METADATA_AVAILABLE.equals(action)) {
-                String msg = intent.getStringExtra(BLEService.BROADCAST_EXTRA_DATA);
-                Log.d(TAG, "metadata: " + msg);
+            if (BLEService.BROADCAST_BLESERVICE_METADATA_AVAILABLE.equals(action)) {
+                String msg = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_DATA);
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
+                Log.d(TAG, "device: " + address + " - metadata: " + msg);
                 // TODO: handle metadata
                 return;
             }
@@ -310,12 +331,12 @@ public class DataService extends Service {
     private void registerReceiver() {
         IntentFilter intentFilter = new IntentFilter();
 
-        intentFilter.addAction(DataService.BROADCAST_DATA_START_RECORDING);
-        intentFilter.addAction(DataService.BROADCAST_DATA_STOP_RECORDING);
+        intentFilter.addAction(DataService.BROADCAST_DATASERVICE_START_RECORDING);
+        intentFilter.addAction(DataService.BROADCAST_DATASERVICE_STOP_RECORDING);
 
-        intentFilter.addAction(BLEService.BROADCAST_BLE_DATA_AVAILABLE);
-        intentFilter.addAction(BLEService.BROADCAST_BLE_DATADESCRIPTION_AVAILABLE);
-        intentFilter.addAction(BLEService.BROADCAST_BLE_METADATA_AVAILABLE);
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_DATA_AVAILABLE);
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_DATADESCRIPTION_AVAILABLE);
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_METADATA_AVAILABLE);
 
         intentFilter.addAction(KeepAliveManager.BROADCAST_KEEP_ALIVE_PING);
 
