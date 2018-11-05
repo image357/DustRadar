@@ -175,7 +175,7 @@ public class HTTPIntent extends IntentService {
 
 
     private void handleGetJson(String broadcast, String url) {
-        // TODO: Handle action
+        // TODO: Handle GETJson action
         throw new UnsupportedOperationException("Not yet implemented");
     }
 

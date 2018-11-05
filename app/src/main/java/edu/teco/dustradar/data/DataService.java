@@ -303,7 +303,6 @@ public class DataService extends Service {
                 String did = sharedPref.getString(key, null);
 
                 DataObject data = new DataObject(msg, sturl, tid, did, address);
-                // TODO: important: add ble address to dataobject for datastream id generation
                 if (data.isValid()) {
                     // store data
                     try {
@@ -314,7 +313,6 @@ public class DataService extends Service {
                     catch (Exception e) {
                         e.printStackTrace();
                         Log.e(TAG, "Cannot serialze or save data");
-                        // TODO: print message for dataservice error
                         broadcastUpdate(DataService.BROADCAST_DATASERVICE_ERROR);
                     }
                 }

@@ -433,12 +433,18 @@ public class BLEBridge extends AppCompatActivity {
             }
 
             if (BLEService.BROADCAST_BLESERVICE_ERROR.equals(action)) {
-                // TODO: handle BLE error
+                Toast.makeText(context, "BLEService error",
+                        Toast.LENGTH_LONG).show();
+                stopServices();
+                finish();
                 return;
             }
 
             if (DataService.BROADCAST_DATASERVICE_ERROR.equals(action)) {
-                // TODO: handle data error
+                Toast.makeText(context, "DataService error",
+                        Toast.LENGTH_LONG).show();
+                stopServices();
+                finish();
                 return;
             }
         }

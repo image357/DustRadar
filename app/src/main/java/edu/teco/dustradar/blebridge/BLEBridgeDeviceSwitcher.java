@@ -15,8 +15,6 @@ import edu.teco.dustradar.R;
 
 public class BLEBridgeDeviceSwitcher extends Fragment {
 
-    // TODO: Handle WhiteScreen
-
     private static final String TAG = BLEBridgeDeviceSwitcher.class.getSimpleName();
 
     // parameters
