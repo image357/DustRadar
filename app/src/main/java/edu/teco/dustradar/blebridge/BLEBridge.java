@@ -223,6 +223,10 @@ public class BLEBridge extends AppCompatActivity {
                 HTTPService.startService(this);
             }
 
+            if (!KeepAliveManager.isRunning(this)) {
+                KeepAliveManager.startService(this);
+            }
+
             final Context context = this;
 
             Handler handler = new Handler();
