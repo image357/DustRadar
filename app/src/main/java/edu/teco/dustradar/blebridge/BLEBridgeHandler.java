@@ -200,6 +200,7 @@ public class BLEBridgeHandler extends Fragment {
                 String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
                 if (deviceAddress.equals(address)) {
                     lastData = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_DATA);
+                    bleConnectionStatus = "Connected";
                     updateView();
                 }
                 return;

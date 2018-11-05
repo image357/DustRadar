@@ -400,6 +400,7 @@ public class BLEService extends Service {
                         }
 
                         if (firstConnect == 0) {
+                            firstConnect = -2;
                             broadcastUpdate(BROADCAST_BLESERVICE_FIRST_CONNECT);
                         }
                     }

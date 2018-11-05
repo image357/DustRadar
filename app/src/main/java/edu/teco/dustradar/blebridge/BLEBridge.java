@@ -236,6 +236,7 @@ public class BLEBridge extends AppCompatActivity {
             }), 1000);
 
             if (!isInHandler) {
+                isInHandler = true;
                 ArrayList<String> deviceAddress = new ArrayList<>();
                 deviceAddress.add("None");
                 BLEBridgeDeviceSwitcher switcherFragment = BLEBridgeDeviceSwitcher.newInstance(deviceAddress);

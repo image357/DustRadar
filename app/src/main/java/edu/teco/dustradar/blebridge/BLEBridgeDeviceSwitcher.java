@@ -61,7 +61,7 @@ public class BLEBridgeDeviceSwitcher extends Fragment {
 
         BLEBridgeDeviceSwitcher.SectionsPagerAdapter mSectionsPagerAdapter =
                 new BLEBridgeDeviceSwitcher.SectionsPagerAdapter(
-                        getActivity().getSupportFragmentManager(),
+                        getChildFragmentManager(),
                         deviceAddress.size()
                 );
         mViewPager = rootView.findViewById(R.id.device_container);
