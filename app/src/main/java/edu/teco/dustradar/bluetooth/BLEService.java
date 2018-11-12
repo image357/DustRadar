@@ -62,6 +62,11 @@ public class BLEService extends Service {
     public final static UUID METADATA_CHARACTERISTIC_UUID =
             UUID.fromString("0933fb51-155f-4f17-98c6-3a9663f51a3c");
 
+    public final static UUID HEARTRATE_SERVICE_UUID =
+            UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb");
+    public final static UUID HEARTRATE_CHARACTERISTIC_UUID =
+            UUID.fromString("00002A37-0000-1000-8000-00805f9b34fb");
+
     private final static List<UUID> requiredServiceUUIDs = Arrays.asList(
             DATA_SERVICE_UUID,
             METADATA_SERVICE_UUID
@@ -82,6 +87,7 @@ public class BLEService extends Service {
     public final static String BROADCAST_BLESERVICE_DATADESCRIPTION_AVAILABLE = "BROADCAST_BLESERVICE_DATADESCRIPTION_AVAILABLE";
     public final static String BROADCAST_BLESERVICE_READ_METADATA = "BROADCAST_BLESERVICE_READ_METADATA";
     public final static String BROADCAST_BLESERVICE_METADATA_AVAILABLE = "BROADCAST_BLESERVICE_METADATA_AVAILABLE";
+    public final static String BROADCAST_BLESERVICE_HEARTRATE_AVAILABLE = "BROADCAST_BLESERVICE_HEARTRATE_AVAILABLE";
 
     public final static String EXTRA_BLESERVICE_DATA = "EXTRA_BLESERVICE_DATA";
     public final static String EXTRA_BLESERVICE_ADDRESS = "EXTRA_BLESERVICE_ADDRESS";
@@ -101,6 +107,9 @@ public class BLEService extends Service {
 
     private HashMap<String, BluetoothGattService> MetadataService = new HashMap<>();
     private HashMap<String, BluetoothGattCharacteristic> MetadataChar = new HashMap<>();
+
+    private HashMap<String, BluetoothGattService> HeartrateService = new HashMap<>();
+    private HashMap<String, BluetoothGattCharacteristic> HeartrateChar = new HashMap<>();
 
     private Queue<Pair<BluetoothGatt, BluetoothGattCharacteristic>> CharFIFO = new LinkedList<>();
     private final int maxCharFIFOsize = 100;
@@ -302,6 +311,12 @@ public class BLEService extends Service {
             return true;
         }
 
+        for (BluetoothGattService service : services) {
+            if (HEARTRATE_SERVICE_UUID.equals(service.getUuid())) {
+                return true;
+            }
+        }
+
         Log.w(TAG, "device with address " + gatt.getDevice().getAddress() + " does not have required services");
         return false;
     }
@@ -319,6 +334,13 @@ public class BLEService extends Service {
     }
 
     private void broadcastUpdate(final String action, final String address, final String data) {
+        Intent intent = new Intent(action);
+        intent.putExtra(EXTRA_BLESERVICE_DATA, data);
+        intent.putExtra(EXTRA_BLESERVICE_ADDRESS, address);
+        sendBroadcast(intent);
+    }
+
+    private void broadcastUpdate(final String action, final String address, final int data) {
         Intent intent = new Intent(action);
         intent.putExtra(EXTRA_BLESERVICE_DATA, data);
         intent.putExtra(EXTRA_BLESERVICE_ADDRESS, address);
@@ -375,22 +397,37 @@ public class BLEService extends Service {
 
                         // services
                         BluetoothGattService dataservice = gatt.getService(DATA_SERVICE_UUID);
-                        DataService.put(gatt.getDevice().getAddress(), dataservice);
                         BluetoothGattService metadataservice = gatt.getService(METADATA_SERVICE_UUID);
-                        MetadataService.put(gatt.getDevice().getAddress(), metadataservice);
+                        BluetoothGattService heartrateservice = gatt.getService(HEARTRATE_SERVICE_UUID);
 
-                        // notify characterstic
-                        BluetoothGattCharacteristic notifychar = dataservice.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
-                        NotifyChar.put(gatt.getDevice().getAddress(), notifychar);
-                        gatt.setCharacteristicNotification(notifychar, true);
-                        BluetoothGattDescriptor descriptor = notifychar.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
-                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                        gatt.writeDescriptor(descriptor);
+                        if (dataservice != null && metadataservice != null) {
+                            DataService.put(gatt.getDevice().getAddress(), dataservice);
+                            MetadataService.put(gatt.getDevice().getAddress(), metadataservice);
 
-                        // other characterstics
-                        DataChar.put(gatt.getDevice().getAddress(), dataservice.getCharacteristic(DATA_CHARACTERISTIC_UUID));
-                        DataDescriptionChar.put(gatt.getDevice().getAddress(), dataservice.getCharacteristic(DATADESCRIPTION_CHARACTERISTIC_UUID));
-                        MetadataChar.put(gatt.getDevice().getAddress(), metadataservice.getCharacteristic(METADATA_CHARACTERISTIC_UUID));
+                            // notify characterstic
+                            BluetoothGattCharacteristic notifychar = dataservice.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
+                            NotifyChar.put(gatt.getDevice().getAddress(), notifychar);
+                            gatt.setCharacteristicNotification(notifychar, true);
+                            BluetoothGattDescriptor descriptor = notifychar.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
+                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            gatt.writeDescriptor(descriptor);
+
+                            // other characterstics
+                            DataChar.put(gatt.getDevice().getAddress(), dataservice.getCharacteristic(DATA_CHARACTERISTIC_UUID));
+                            DataDescriptionChar.put(gatt.getDevice().getAddress(), dataservice.getCharacteristic(DATADESCRIPTION_CHARACTERISTIC_UUID));
+                            MetadataChar.put(gatt.getDevice().getAddress(), metadataservice.getCharacteristic(METADATA_CHARACTERISTIC_UUID));
+                        }
+
+                        if (heartrateservice != null) {
+                            HeartrateService.put(gatt.getDevice().getAddress(), heartrateservice);
+
+                            BluetoothGattCharacteristic heartratechar = heartrateservice.getCharacteristic(HEARTRATE_CHARACTERISTIC_UUID);
+                            HeartrateChar.put(gatt.getDevice().getAddress(), heartratechar);
+                            gatt.setCharacteristicNotification(heartratechar, true);
+                            BluetoothGattDescriptor descriptor = heartratechar.getDescriptor(NOTIFY_DESCRIPTOR_UUID);
+                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            gatt.writeDescriptor(descriptor);
+                        }
 
                         broadcastUpdate(BROADCAST_BLESERVICE_GATT_SERVICES_DISCOVERED, gatt.getDevice().getAddress());
                         Log.i(TAG, "device " + gatt.getDevice().getAddress() + " connected");
@@ -420,6 +457,21 @@ public class BLEService extends Service {
                     CharFIFO.clear();
                 }
                 readCharacteristic(gatt, DataChar.get(gatt.getDevice().getAddress()));
+                return;
+            }
+
+            if (HeartrateChar.containsValue(characteristic)) {
+                int flag = characteristic.getProperties();
+
+                int format = -1;
+                if ((flag & 0x01) != 0) {
+                    format = BluetoothGattCharacteristic.FORMAT_UINT16;
+                } else {
+                    format = BluetoothGattCharacteristic.FORMAT_UINT8;
+                }
+
+                int data = characteristic.getIntValue(format, 1);
+                broadcastUpdate(BROADCAST_BLESERVICE_HEARTRATE_AVAILABLE, gatt.getDevice().getAddress(), data);
                 return;
             }
 

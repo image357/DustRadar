@@ -206,6 +206,16 @@ public class BLEBridgeHandler extends Fragment {
                 return;
             }
 
+            if (BLEService.BROADCAST_BLESERVICE_HEARTRATE_AVAILABLE.equals(action)) {
+                String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
+                if (deviceAddress.equals(address)) {
+                    lastData = String.valueOf(intent.getIntExtra(BLEService.EXTRA_BLESERVICE_DATA, 0)) + " bpm";
+                    bleConnectionStatus = "Connected";
+                    updateView();
+                }
+                return;
+            }
+
             if (BLEService.BROADCAST_BLESERVICE_GATT_CONNECTED.equals(action)) {
                 String address = intent.getStringExtra(BLEService.EXTRA_BLESERVICE_ADDRESS);
                 if (deviceAddress.equals(address)) {
@@ -253,6 +263,7 @@ public class BLEBridgeHandler extends Fragment {
 
         filter.addAction(DataService.BROADCAST_DATASERVICE_DATA_STORED);
         filter.addAction(BLEService.BROADCAST_BLESERVICE_DATA_AVAILABLE);
+        filter.addAction(BLEService.BROADCAST_BLESERVICE_HEARTRATE_AVAILABLE);
         filter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_CONNECTED);
         filter.addAction(BLEService.BROADCAST_BLESERVICE_GATT_DISCONNECTED);
         filter.addAction(GPSService.BROADCAST_GPSSERVICE_LOCATION_AVAILABLE);

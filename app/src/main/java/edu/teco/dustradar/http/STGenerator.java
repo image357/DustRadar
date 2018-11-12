@@ -22,19 +22,25 @@ public class STGenerator {
 
     // constants
     private final String sensor_SDS011_id = "saqn:s:teco.edu:SDS011";
+    private final String sensor_POLAR_id = "saqn:s:teco.edu:POLAR";
     private final String observedProperty_PM10_id = "saqn:o:PM10";
     private final String observedProperty_PM25_id = "saqn:o:PM25";
+    private final String observedProperty_HR_id = "saqn:o:heartrate";
 
     // SensorThings
     private Thing thing = null;
     private Datastream datastream_PM10 = null;
     private Datastream datastream_PM25 = null;
+    private Datastream datastream_HR = null;
     private Sensor sensor_SDS011 = null;
+    private Sensor sensor_POLAR = null;
     private ObservedProperty observedProperty_PM10 = null;
     private ObservedProperty observedProperty_PM25 = null;
+    private ObservedProperty observedProperty_HR = null;
     private FeatureOfInterest featureOfInterest = null;
     private Observation observation_PM10 = null;
     private Observation observation_PM25 = null;
+    private Observation observation_HR = null;
 
 
     // constructors
@@ -45,11 +51,15 @@ public class STGenerator {
         createThing();
         createDatastream_PM10();
         createDatastream_PM25();
+        createDatastream_HR();
         createSensor_SDS011();
+        createSensor_POLAR();
         createObservedProperty_PM10();
         createObservedProperty_PM25();
+        createObservedProperty_HR();
         createEvent_PM10();
         createEvent_PM25();
+        createEvent_HR();
     }
 
 
@@ -79,12 +89,28 @@ public class STGenerator {
         return datastream_PM25.getId();
     }
 
+    public String getDatastream_HR() {
+        return datastream_HR.toJson();
+    }
+
+    public String getDatastream_HR_id() {
+        return datastream_HR.getId();
+    }
+
     public String getSensor_SDS011() {
         return sensor_SDS011.toJson();
     }
 
     public String getSensor_SDS011_id() {
         return sensor_SDS011.getId();
+    }
+
+    public String getSensor_POLAR() {
+        return sensor_POLAR.toJson();
+    }
+
+    public String getSensor_POLAR_id() {
+        return sensor_POLAR.getId();
     }
 
     public String getObservedProperty_PM10() {
@@ -103,12 +129,24 @@ public class STGenerator {
         return observedProperty_PM25.getId();
     }
 
+    public String getObservedProperty_HR() {
+        return observedProperty_HR.toJson();
+    }
+
+    public String getObservedProperty_HR_id() {
+        return observedProperty_HR.getId();
+    }
+
     public String getEvent_PM10() {
         return observation_PM10.toJson();
     }
 
     public String getEvent_PM25() {
         return observation_PM25.toJson();
+    }
+
+    public String getEvent_HR() {
+        return observation_HR.toJson();
     }
 
 
@@ -118,8 +156,8 @@ public class STGenerator {
         thing = new Thing();
 
         thing.setId(data.getThingId());
-        thing.setName("HMGU-Messwagen");
-        thing.setDescription("Mobiler HMGU-Messwagen fuer Aerosolmessungen, ausgestattet mit SDS011 Sensoren");
+        thing.setName("Digitalisierung? Läuft!");
+        thing.setDescription("Läufer");
     }
 
     private void createDatastream_PM10() {
@@ -162,6 +200,26 @@ public class STGenerator {
         datastream_PM25.linkThing(data.getThingId());
     }
 
+    private void createDatastream_HR() {
+        datastream_HR = new Datastream();
+
+        datastream_HR.setId(data.getDatastreamId() + ":heartrate");
+        datastream_HR.setName("Heart rate");
+        datastream_HR.setDescription("n/a");
+
+        UnitOfMeasurement unitOfMeasurement = new UnitOfMeasurement();
+        unitOfMeasurement.setName("beats per minute");
+        unitOfMeasurement.setSymbol("bpm");
+        unitOfMeasurement.setDefinition("none");
+        datastream_HR.setUnitOfMeasurement(unitOfMeasurement);
+
+        datastream_HR.setObservationType("http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement");
+
+        datastream_HR.linkSensor(sensor_POLAR_id);
+        datastream_HR.linkObservedProperty(observedProperty_HR_id);
+        datastream_HR.linkThing(data.getThingId());
+    }
+
     private void createSensor_SDS011() {
         sensor_SDS011 = new Sensor();
 
@@ -170,6 +228,16 @@ public class STGenerator {
         sensor_SDS011.setDescription("Particulate matter sensor for PM 10 and PM 2.5");
         sensor_SDS011.setEncodingType("application/pdf");
         sensor_SDS011.setMetadata("http://www.teco.edu/~koepke/SDS011.pdf");
+    }
+
+    private void createSensor_POLAR() {
+        sensor_POLAR = new Sensor();
+
+        sensor_POLAR.setId(sensor_POLAR_id);
+        sensor_POLAR.setName("Polar heart rate sensor");
+        sensor_POLAR.setDescription("Heart rate sensor");
+        sensor_POLAR.setEncodingType("application/pdf");
+        sensor_POLAR.setMetadata("none");
     }
 
     private void createObservedProperty_PM10() {
@@ -194,6 +262,20 @@ public class STGenerator {
         observedProperty_PM25.setDescription("Particulate matter with an approximate diameter of less than 2.5 micrometers");
         try {
             observedProperty_PM25.setDefinition("https://www.eea.europa.eu/themes/air/air-quality/resources/glossary/pm10");
+        }
+        catch (URISyntaxException e) {
+            throw new RuntimeException("Cannot create ObservedProperty");
+        }
+    }
+
+    private void createObservedProperty_HR() {
+        observedProperty_HR = new ObservedProperty();
+
+        observedProperty_HR.setId(observedProperty_HR_id);
+        observedProperty_HR.setName("Heart rate");
+        observedProperty_HR.setDescription("Heart rate");
+        try {
+            observedProperty_HR.setDefinition("https://www.google.com");
         }
         catch (URISyntaxException e) {
             throw new RuntimeException("Cannot create ObservedProperty");
@@ -238,6 +320,20 @@ public class STGenerator {
         observation_PM25.setFeatureOfInterest(featureOfInterest);
 
         observation_PM25.linkDatastream(data.getDatastreamId() + ":PM25");
+    }
+
+    private void createEvent_HR() {
+        if (featureOfInterest == null) {
+            createFeatureOfInterest();
+        }
+
+        observation_HR = new Observation();
+
+        observation_HR.setPhenomenonTime(data.getTime());
+        observation_HR.setResult(data.getHeartrate());
+        observation_HR.setFeatureOfInterest(featureOfInterest);
+
+        observation_HR.linkDatastream(data.getDatastreamId() + ":heartrate");
     }
 
 }

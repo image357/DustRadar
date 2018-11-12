@@ -48,6 +48,8 @@ public class DataService extends Service {
 
     private final String fileName = "DataQueue";
 
+    private int lastHeartrate = -1;
+
 
     // constructors
 
@@ -302,7 +304,7 @@ public class DataService extends Service {
                 key = getResources().getString(R.string.blebridge_pref_pm_datastream_id_key);
                 String did = sharedPref.getString(key, null);
 
-                DataObject data = new DataObject(msg, sturl, tid, did, address);
+                DataObject data = new DataObject(msg, lastHeartrate, sturl, tid, did, address);
                 if (data.isValid()) {
                     // store data
                     try {
@@ -316,6 +318,11 @@ public class DataService extends Service {
                         broadcastUpdate(DataService.BROADCAST_DATASERVICE_ERROR);
                     }
                 }
+                return;
+            }
+
+            if (BLEService.BROADCAST_BLESERVICE_HEARTRATE_AVAILABLE.equals(action)) {
+                lastHeartrate = intent.getIntExtra(BLEService.EXTRA_BLESERVICE_DATA, 0);
                 return;
             }
 
@@ -349,6 +356,7 @@ public class DataService extends Service {
         intentFilter.addAction(DataService.BROADCAST_DATASERVICE_STOP_RECORDING);
 
         intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_DATA_AVAILABLE);
+        intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_HEARTRATE_AVAILABLE);
         intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_DATADESCRIPTION_AVAILABLE);
         intentFilter.addAction(BLEService.BROADCAST_BLESERVICE_METADATA_AVAILABLE);
 

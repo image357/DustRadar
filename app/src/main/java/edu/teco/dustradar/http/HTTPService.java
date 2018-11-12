@@ -288,6 +288,12 @@ public class HTTPService extends Service {
                 CreatedSensorIds.add(stgen.getSensor_SDS011_id());
             }
 
+            if (!CreatedSensorIds.contains(stgen.getSensor_POLAR_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_SENSOR,
+                        sturl + "/v1.0/Sensors", stgen.getSensor_POLAR());
+                CreatedSensorIds.add(stgen.getSensor_POLAR_id());
+            }
+
             if (!CreatedObservedPropertyIds.contains(stgen.getObservedProperty_PM10_id())) {
                 HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_OBSERVEDPROPERTY,
                         sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_PM10());
@@ -298,6 +304,12 @@ public class HTTPService extends Service {
                 HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_OBSERVEDPROPERTY,
                         sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_PM25());
                 CreatedObservedPropertyIds.add(stgen.getObservedProperty_PM25_id());
+            }
+
+            if (!CreatedObservedPropertyIds.contains(stgen.getObservedProperty_HR_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_OBSERVEDPROPERTY,
+                        sturl + "/v1.0/ObservedProperties", stgen.getObservedProperty_HR());
+                CreatedObservedPropertyIds.add(stgen.getObservedProperty_HR_id());
             }
 
             if (!CreatedDatastreamIds.contains(stgen.getDatastream_PM10_id())) {
@@ -312,10 +324,18 @@ public class HTTPService extends Service {
                 CreatedDatastreamIds.add(stgen.getDatastream_PM25_id());
             }
 
+            if (!CreatedDatastreamIds.contains(stgen.getDatastream_HR_id())) {
+                HTTPIntent.Post(context, ACTION_HTTPSERVICE_POST_DATASTREAM,
+                        sturl + "/v1.0/Datastreams", stgen.getDatastream_HR());
+                CreatedDatastreamIds.add(stgen.getDatastream_HR_id());
+            }
+
             HTTPIntent.Post(context, uuid,
                     sturl + "/v1.0/Observations", stgen.getEvent_PM10());
             HTTPIntent.Post(context, uuid,
                     sturl + "/v1.0/Observations", stgen.getEvent_PM25());
+            HTTPIntent.Post(context, uuid,
+                    sturl + "/v1.0/Observations", stgen.getEvent_HR());
 
             restartRunnable(20);
         }

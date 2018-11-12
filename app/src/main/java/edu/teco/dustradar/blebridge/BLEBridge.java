@@ -44,7 +44,7 @@ public class BLEBridge extends AppCompatActivity {
     private boolean inSettings;
 
     private boolean shouldTimeout;
-    private final int timeoutTime = 30000;
+    private final int timeoutTime = 60000;
 
     private long lastWarnConnection = 0;
     private final long minLastWarnConnection = 4000;

@@ -27,6 +27,7 @@ public class DataObject implements Serializable {
     private double latitude = 0.0;
     private double longitude = 0.0;
     private double height = 0.0;
+    private int heartrate = 0;
     private String data = null;
     private HashMap<String, Double> data_map = null;
 
@@ -47,12 +48,13 @@ public class DataObject implements Serializable {
 
     // constructors
 
-    public DataObject(String data, String sturl, String thingid, String datastreamid, String dsidSuffix) {
+    public DataObject(String data, int heartrate, String sturl, String thingid, String datastreamid, String dsidSuffix) {
         isvalid = true;
         setTime(new ISODateInstance());
         setLocation(GPSService.getLocation());
 
         setData(data);
+        setHeartrate(heartrate);
         setStURL(sturl);
         setThingid(thingid);
         setDatastreamId(datastreamid, dsidSuffix);
@@ -154,6 +156,19 @@ public class DataObject implements Serializable {
             e.printStackTrace();
             isvalid = false;
         }
+    }
+
+
+    public int getHeartrate() {
+        return heartrate;
+    }
+
+    public void setHeartrate(int heartrate) {
+        if (heartrate == 0) {
+            isvalid = false;
+        }
+
+        this.heartrate = heartrate;
     }
 
 
