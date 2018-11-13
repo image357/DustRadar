@@ -118,8 +118,8 @@ public class STGenerator {
         thing = new Thing();
 
         thing.setId(data.getThingId());
-        thing.setName("HMGU-Messwagen");
-        thing.setDescription("Mobiler HMGU-Messwagen fuer Aerosolmessungen, ausgestattet mit SDS011 Sensoren");
+        thing.setName("n/a");
+        thing.setDescription("n/a");
     }
 
     private void createDatastream_PM10() {
