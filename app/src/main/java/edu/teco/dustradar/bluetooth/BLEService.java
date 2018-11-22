@@ -38,6 +38,9 @@ import java.util.UUID;
 
 import edu.teco.dustradar.blebridge.KeepAliveManager;
 
+/**
+ * Background service for handling BLE connections
+ */
 public class BLEService extends Service {
 
     private final static String TAG = BLEService.class.getSimpleName();
@@ -110,12 +113,19 @@ public class BLEService extends Service {
 
     // constructors
 
+    /**
+     * Empty constructor. Do not use it!
+     */
     public BLEService() {
     }
 
 
     // static service handlers
 
+    /**
+     * @param context Context that will start the service
+     * @param devices List of BLE devices that the service should connect to
+     */
     public static void startService(Context context, ArrayList<BluetoothDevice> devices) {
         if(context == null || devices == null) {
             throw new Resources.NotFoundException("Cannot start service without context or devices");
@@ -137,6 +147,9 @@ public class BLEService extends Service {
         context.startService(serviceIntent);
     }
 
+    /**
+     * @param context Context that will stop the service
+     */
     public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
@@ -147,6 +160,10 @@ public class BLEService extends Service {
         context.stopService(serviceIntent);
     }
 
+    /**
+     * @param context Context that can call getSystemService(...)
+     * @return true when running. false otherwise
+     */
     public static boolean isRunning(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot check service without context");
@@ -232,6 +249,10 @@ public class BLEService extends Service {
 
     // static methods
 
+    /**
+     * @param activity Activity that will be checked for the permission
+     * @return true when the activity has the permission. false otherwise
+     */
     public static boolean hasLocationPermission (Activity activity) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             return true;
@@ -242,6 +263,10 @@ public class BLEService extends Service {
     }
 
 
+    /**
+     * @param activity Activity that tries to request the permission
+     * @param requestCode Request code that will be used in onActivityResult(...)
+     */
     @TargetApi(Build.VERSION_CODES.M)
     public static void requestLocationPermission(Activity activity, int requestCode) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {

@@ -14,6 +14,9 @@ import java.util.Comparator;
 import edu.teco.dustradar.R;
 
 
+/**
+ * ListAdapter for storing BLEScan results
+ */
 public class BLEDeviceListAdapter extends BaseAdapter {
 
     private ArrayList<BluetoothDevice> mBLEDevices;
@@ -23,6 +26,12 @@ public class BLEDeviceListAdapter extends BaseAdapter {
     private int mBLEAddressResource;
 
 
+    /**
+     * @param activity Activity that wants to store BLEscan results
+     * @param bleListLayout Resource id that points to the layout of a single view item
+     * @param bleNameResource Resource id that points to the first TextView in a view item
+     * @param bleAddressResource Resource id that points to the second TextView in a view item
+     */
     public BLEDeviceListAdapter(Activity activity, int bleListLayout, int bleNameResource, int bleAddressResource) {
         super();
 
@@ -34,6 +43,9 @@ public class BLEDeviceListAdapter extends BaseAdapter {
     }
 
 
+    /**
+     * @param device adds a device to the ListAdapter and sorts it
+     */
     public void addDevice(BluetoothDevice device) {
         if(! mBLEDevices.contains(device)) {
             mBLEDevices.add(device);
@@ -42,6 +54,10 @@ public class BLEDeviceListAdapter extends BaseAdapter {
     }
 
 
+    /**
+     * @param position Position index for returning a device in the ListAdapter
+     * @return BLE device
+     */
     public BluetoothDevice getDevice(int position) {
         if (position >= mBLEDevices.size()) {
             return null;
@@ -51,11 +67,17 @@ public class BLEDeviceListAdapter extends BaseAdapter {
     }
 
 
+    /**
+     * Clear the ListAdapter
+     */
     public void clear() {
         mBLEDevices.clear();
     }
 
 
+    /**
+     * Sorts the ListAdapter in lexicographical order. First TextView > second TextView. UNKNOWN < all
+     */
     public void sort() {
         Collections.sort(mBLEDevices, new Comparator<BluetoothDevice>() {
             @Override
@@ -84,18 +106,29 @@ public class BLEDeviceListAdapter extends BaseAdapter {
     }
 
 
+    /**
+     * @return Number of stored devices
+     */
     @Override
     public int getCount() {
         return mBLEDevices.size();
     }
 
 
+    /**
+     * @param i Position index for returning a BLE device from the ListAdapter
+     * @return BLE device
+     */
     @Override
     public Object getItem(int i) {
         return mBLEDevices.get(i);
     }
 
 
+    /**
+     * @param i Position index of the BLE device in the ListAdapter
+     * @return hashCode() of the BLE device address string
+     */
     @Override
     public long getItemId(int i) {
         return getDevice(i).getAddress().hashCode();
@@ -111,6 +144,13 @@ public class BLEDeviceListAdapter extends BaseAdapter {
     }
 
 
+    /**
+     * Creates list item view
+     * @param i Position index for the BLE device within the ListAdapter
+     * @param view old view to reuse
+     * @param viewGroup viewGroup - not used
+     * @return View of the list item at position i
+     */
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         ViewHolder viewHolder;
