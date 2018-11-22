@@ -13,6 +13,9 @@ import java.util.ArrayList;
 
 import edu.teco.dustradar.R;
 
+/**
+ * Placeholder fragment that allows switching between several BLEBridgeHandler instances
+ */
 public class BLEBridgeDeviceSwitcher extends Fragment {
 
     private static final String TAG = BLEBridgeDeviceSwitcher.class.getSimpleName();
@@ -29,9 +32,16 @@ public class BLEBridgeDeviceSwitcher extends Fragment {
 
     // constructors
 
+    /**
+     * Empty constructor. Use static newInstance(...) instead
+     */
     public BLEBridgeDeviceSwitcher() {
     }
 
+    /**
+     * @param deviceAddress List of BLE device addresses that will be handed to each BLEBridgeHandler instance
+     * @return Instance of BLEBridgeDeviceSwitcher
+     */
     public static BLEBridgeDeviceSwitcher newInstance(ArrayList<String> deviceAddress) {
         BLEBridgeDeviceSwitcher fragment = new BLEBridgeDeviceSwitcher();
         Bundle args = new Bundle();
@@ -72,6 +82,9 @@ public class BLEBridgeDeviceSwitcher extends Fragment {
 
     // FragmentPagerAdapter
 
+    /**
+     * FragmentPagerAdapter specific to changing between BLEBridgeHandler instances
+     */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         private int numberOfSections = 1;

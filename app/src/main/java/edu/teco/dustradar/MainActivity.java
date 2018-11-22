@@ -23,6 +23,9 @@ import android.widget.VideoView;
 
 import edu.teco.dustradar.blebridge.BLEBridge;
 
+/**
+ * Main activity
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();

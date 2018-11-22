@@ -11,12 +11,16 @@ import android.support.v7.preference.PreferenceGroup;
 
 import edu.teco.dustradar.R;
 
+
 /**
- * A simple {@link PreferenceFragmentCompat} subclass.
+ * BLEBridge settings fragment. Started when selecting "Settings" from the action bar menu.
  */
 public class BLEBridgeSettings extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
 
 
+    /**
+     * Default constructor
+     */
     public BLEBridgeSettings() {
     }
 

@@ -23,6 +23,9 @@ import edu.teco.dustradar.http.HTTPIntent;
 import edu.teco.dustradar.http.HTTPService;
 
 
+/**
+ * Handler fragment for an established BLE connection. Handles a single device
+ */
 public class BLEBridgeHandler extends Fragment {
 
     private static final String TAG = BLEBridgeHandler.class.getSimpleName();
@@ -57,9 +60,16 @@ public class BLEBridgeHandler extends Fragment {
 
     // constructors
 
+    /**
+     * Empty constructor. Use static newInstance(...) instead
+     */
     public BLEBridgeHandler() {
     }
 
+    /**
+     * @param deviceAddress BLE device address of the current connection
+     * @return Instance of BLEBridgeHandler
+     */
     public static BLEBridgeHandler newInstance(String deviceAddress) {
         BLEBridgeHandler fragment = new BLEBridgeHandler();
         Bundle args = new Bundle();
@@ -156,6 +166,9 @@ public class BLEBridgeHandler extends Fragment {
 
     // private methods
 
+    /**
+     * Generic method to update the current view after an event
+     */
     private void updateView() {
         long currenttime = System.currentTimeMillis();
         if ((currenttime - lastViewUpdate) < minLastViewUpdate) {

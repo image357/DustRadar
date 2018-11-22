@@ -22,6 +22,9 @@ import edu.teco.dustradar.bluetooth.BLEDeviceListAdapter;
 import edu.teco.dustradar.bluetooth.BLEScan;
 
 
+/**
+ * BLE scan fragment. Started right after BLEBridge activity
+ */
 public class BLEBridgeScan extends Fragment {
 
     private static final String TAG = BLEBridgeScan.class.getSimpleName();
@@ -40,6 +43,9 @@ public class BLEBridgeScan extends Fragment {
 
     // constructors
 
+    /**
+     * Default constructor
+     */
     public BLEBridgeScan() {
     }
 

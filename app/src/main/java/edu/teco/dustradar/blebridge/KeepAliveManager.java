@@ -12,6 +12,9 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
+/**
+ * Background services that constantly pings the BLEBridge services in order to prevent Android forced service stops
+ */
 public class KeepAliveManager extends Service {
 
     private final static String TAG = KeepAliveManager.class.getSimpleName();
@@ -32,12 +35,18 @@ public class KeepAliveManager extends Service {
 
     // constructors
 
+    /**
+     * Empty constructor. Do not use it!
+     */
     public KeepAliveManager() {
     }
 
 
     // static service handlers
 
+    /**
+     * @param context Context that will start the service
+     */
     public static void startService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot start service without context");
@@ -53,6 +62,9 @@ public class KeepAliveManager extends Service {
         context.startService(serviceIntent);
     }
 
+    /**
+     * @param context Context that will stop the service
+     */
     public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
@@ -62,6 +74,10 @@ public class KeepAliveManager extends Service {
         context.stopService(serviceIntent);
     }
 
+    /**
+     * @param context Context that can call getSystemService(...)
+     * @return true when running. false otherwise
+     */
     public static boolean isRunning(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot check service without context");

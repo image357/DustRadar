@@ -32,6 +32,9 @@ import edu.teco.dustradar.data.DataService;
 import edu.teco.dustradar.gps.GPSService;
 import edu.teco.dustradar.http.HTTPService;
 
+/**
+ * Main controller activity for the BLEBridge
+ */
 public class BLEBridge extends AppCompatActivity {
 
     private static final String TAG = BLEBridge.class.getSimpleName();
@@ -291,6 +294,10 @@ public class BLEBridge extends AppCompatActivity {
 
     // public methods
 
+    /**
+     * Method to start the BLE connection to a list of devices (called by BLEBridgeHandler)
+     * @param devices List of BLE devices
+     */
     public void InitiateBLEConnection(ArrayList<BluetoothDevice> devices) {
         isInHandler = true;
         this.devices = devices;
