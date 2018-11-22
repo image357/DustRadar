@@ -12,6 +12,9 @@ import edu.teco.dustradar.sensorthings.Thing;
 import edu.teco.dustradar.sensorthings.geojson.GeoPoint;
 import edu.teco.dustradar.sensorthings.helper.UnitOfMeasurement;
 
+/**
+ * Creates SensorThings compatible JSON Strings from a DataObject
+ */
 public class STGenerator {
 
     private final static String TAG = STGenerator.class.getSimpleName();
@@ -39,6 +42,9 @@ public class STGenerator {
 
     // constructors
 
+    /**
+     * @param data DataObject that holds measurements and metadata
+     */
     public STGenerator(DataObject data) {
         this.data = data;
 
@@ -55,58 +61,100 @@ public class STGenerator {
 
     // public methods
 
+    /**
+     * @return String in JSON format
+     */
     public String getThing() {
         return thing.toJson();
     }
 
+    /**
+     * @return Thing id as String
+     */
     public String getThing_id() {
         return thing.getId();
     }
 
+    /**
+     * @return String in JSON format
+     */
     public String getDatastream_PM10() {
         return datastream_PM10.toJson();
     }
 
+    /**
+     * @return Datastream id as String
+     */
     public String getDatastream_PM10_id() {
         return datastream_PM10.getId();
     }
 
+    /**
+     * @return String in JSON format
+     */
     public String getDatastream_PM25() {
         return datastream_PM25.toJson();
     }
 
+    /**
+     * @return Datastream id as String
+     */
     public String getDatastream_PM25_id() {
         return datastream_PM25.getId();
     }
 
+    /**
+     * @return String in JSON format
+     */
     public String getSensor_SDS011() {
         return sensor_SDS011.toJson();
     }
 
+    /**
+     * @return Sensor id as String
+     */
     public String getSensor_SDS011_id() {
         return sensor_SDS011.getId();
     }
 
+    /**
+     * @return String in JSON format
+     */
     public String getObservedProperty_PM10() {
         return observedProperty_PM10.toJson();
     }
 
+    /**
+     * @return ObservedProperty id as String
+     */
     public String getObservedProperty_PM10_id() {
         return observedProperty_PM10.getId();
     }
 
+    /**
+     * @return String in JSON format
+     */
     public String getObservedProperty_PM25() {
         return observedProperty_PM25.toJson();
     }
 
+    /**
+     * @return ObservedProperty id as String
+     */
     public String getObservedProperty_PM25_id() {
         return observedProperty_PM25.getId();
     }
 
+    /**
+     * @return String in JSON format that holds an Observation and a FeatureOfInterest
+     */
     public String getEvent_PM10() {
         return observation_PM10.toJson();
     }
 
+    /**
+     * @return String in JSON format that holds an Observation and a FeatureOfInterest
+     */
     public String getEvent_PM25() {
         return observation_PM25.toJson();
     }

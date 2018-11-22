@@ -18,6 +18,9 @@ import java.util.HashMap;
 import edu.teco.dustradar.gps.GPSService;
 import edu.teco.dustradar.sensorthings.date.ISODateInstance;
 
+/**
+ * Holds measurements and metadata
+ */
 public class DataObject implements Serializable {
 
     private final static String TAG = DataObject.class.getSimpleName();
@@ -47,6 +50,13 @@ public class DataObject implements Serializable {
 
     // constructors
 
+    /**
+     * @param data JSON String with format {"PM10": value, "PM25": value, "TEMP": value, "HUM": value, "ATM": value}
+     * @param sturl SensorThings server url. Example: http://domain:8080/FROST-Server (no trailing slash and /v1.0)
+     * @param thingid ID of the Thing entity that will store the Datastreams
+     * @param datastreamid Prefix of the ID of the Datastreams that will store the Observations
+     * @param dsidSuffix Additional suffix. Format: datastreamid:dsidSuffix
+     */
     public DataObject(String data, String sturl, String thingid, String datastreamid, String dsidSuffix) {
         isvalid = true;
         setTime(new ISODateInstance());
@@ -61,6 +71,9 @@ public class DataObject implements Serializable {
 
     // public methods
 
+    /**
+     * @return true when DataObject contains valid measurements and metadata. false otherwise
+     */
     public boolean isValid() {
         if (isvalid == false) {
             return false;
@@ -71,15 +84,24 @@ public class DataObject implements Serializable {
         return true;
     }
 
+    /**
+     * @param valid will set DataObject to be valid (= true) or not (= false)
+     */
     public void setValid(boolean valid) {
         this.isvalid = valid;
     }
 
 
+    /**
+     * @return phenomenonTime
+     */
     public ISODateInstance getTime() {
         return time;
     }
 
+    /**
+     * @param time phenomenonTime
+     */
     public void setTime(ISODateInstance time) {
         if (time == null) {
             isvalid = false;
@@ -89,6 +111,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @param location Android Location object
+     */
     public void setLocation(Location location) {
         if (location != null) {
             latitude = location.getLatitude();
@@ -104,6 +129,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return Latitude. Zero if invalid
+     */
     public double getLatitude() {
         return latitude;
     }
@@ -113,6 +141,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return Longitude. Zero if invalid
+     */
     public double getLongitude() {
         return longitude;
     }
@@ -122,6 +153,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return Elevation/Height. Zero if invalid
+     */
     public double getHeight() {
         return height;
     }
@@ -131,10 +165,16 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return JSON String with format {"PM10": value, "PM25": value, "TEMP": value, "HUM": value, "ATM": value} or {} if invalid
+     */
     public String getData() {
         return data;
     }
 
+    /**
+     * @param data JSON String with format {"PM10": value, "PM25": value, "TEMP": value, "HUM": value, "ATM": value}
+     */
     public void setData(String data) {
         if (data != null) {
             this.data = data;
@@ -157,6 +197,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return SensorThings server url. Example: http://domain:8080/FROST-Server (no trailing slash and /v1.0)
+     */
     public String getStURL() {
         return sturl;
     }
@@ -201,6 +244,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return PM10 value. -1.0 if invalid
+     */
     public double getPM10() {
         if (!isValid()) {
             return -1.0;
@@ -214,6 +260,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return PM2.5 value. -1.0 if invalid
+     */
     public double getPM25() {
         if (!isValid()) {
             return -1.0;
@@ -227,6 +276,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return Temperature value. -1000.0 if invalid
+     */
     public double getTemperature() {
         if (!isValid()) {
             return -1000.0;
@@ -240,6 +292,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return Humidity value. -1.0 if invalid
+     */
     public double getHumidity() {
         if (!isValid()) {
             return -1.0;
@@ -253,6 +308,9 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @return Atmospheric Pressure value. -1.0 if invalid
+     */
     public double getAtmosphericPressure() {
         if (!isValid()) {
             return -1.0;
@@ -268,6 +326,11 @@ public class DataObject implements Serializable {
 
     // static methods
 
+    /**
+     * @param object DataObject to serialize into byte[]
+     * @return Array of bytes
+     * @throws IOException Thrown when serialization fails
+     */
     public static byte[] serialize(DataObject object) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream os = new ObjectOutputStream(out);
@@ -276,6 +339,12 @@ public class DataObject implements Serializable {
     }
 
 
+    /**
+     * @param bytes Array of bytes that can be deserialize into DataObject
+     * @return DataObject
+     * @throws IOException Thrown when serialization fails
+     * @throws ClassNotFoundException Thrown when DataObject class is not present
+     */
     public static DataObject deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
         ByteArrayInputStream in = new ByteArrayInputStream(bytes);
         ObjectInputStream is = new ObjectInputStream(in);

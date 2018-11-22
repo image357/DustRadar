@@ -21,6 +21,9 @@ import edu.teco.dustradar.blebridge.KeepAliveManager;
 import edu.teco.dustradar.data.DataObject;
 import edu.teco.dustradar.data.DataService;
 
+/**
+ * Background service to handle the HTTP connection to the SensorThings server
+ */
 public class HTTPService extends Service {
 
     private final static String TAG = HTTPService.class.getSimpleName();
@@ -48,12 +51,18 @@ public class HTTPService extends Service {
 
     // constructors
 
+    /**
+     * Empty constructor. Do not use it!
+     */
     public HTTPService() {
     }
 
 
     // static service handlers
 
+    /**
+     * @param context Context that will start the service
+     */
     public static void startService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot start service without context");
@@ -69,7 +78,9 @@ public class HTTPService extends Service {
         context.startService(serviceIntent);
     }
 
-
+    /**
+     * @param context Context that will stop the service
+     */
     public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
@@ -79,7 +90,10 @@ public class HTTPService extends Service {
         context.stopService(serviceIntent);
     }
 
-
+    /**
+     * @param context Context that can call getSystemService(...)
+     * @return true when running. false otherwise
+     */
     public static boolean isRunning(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot check service without context");

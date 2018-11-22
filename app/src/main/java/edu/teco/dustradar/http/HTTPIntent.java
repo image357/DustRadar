@@ -16,6 +16,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * IntentService that handles actual POST and GET requests
+ */
 public class HTTPIntent extends IntentService {
 
     private final static String TAG = HTTPIntent.class.getSimpleName();
@@ -41,6 +44,9 @@ public class HTTPIntent extends IntentService {
 
     // constructors
 
+    /**
+     * Default constructor. Sets "HHTPIntent" as name and setIntentRedelivery(true)
+     */
     public HTTPIntent() {
         super("HTTPIntent");
         setIntentRedelivery(true);
@@ -49,6 +55,12 @@ public class HTTPIntent extends IntentService {
 
     // helper methods
 
+    /**
+     * @param context Context that can start the IntentService
+     * @param returnBroadcast String that will be part of all reply broadcast messages (key: EXTRA_HTTPINTENT_BROADCAST)
+     * @param url Target url for the request
+     * @param json JSON payload
+     */
     public static void Post(Context context, String returnBroadcast, String url, String json) {
         Intent intent = new Intent(context, HTTPIntent.class);
         intent.setAction(ACTION_HTTPINTENT_POST_JSON);
@@ -59,6 +71,11 @@ public class HTTPIntent extends IntentService {
     }
 
 
+    /**
+     * @param context Context that can start the IntentService
+     * @param returnBroadcast String that will be part of all reply broadcast messages (key: EXTRA_HTTPINTENT_BROADCAST)
+     * @param url Target url for the request
+     */
     public static void GetJson(Context context, String returnBroadcast, String url) {
         Intent intent = new Intent(context, HTTPIntent.class);
         intent.setAction(ACTION_HTTPINTENT_GET_JSON);
@@ -70,6 +87,9 @@ public class HTTPIntent extends IntentService {
 
     // event handlers
 
+    /**
+     * @param intent Should contain extras: EXTRA_HTTPINTENT_URL, EXTRA_HTTPINTENT_BROADCAST. May contain extras: EXTRA_HTTPINTENT_JSON
+     */
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {

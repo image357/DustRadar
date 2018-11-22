@@ -26,6 +26,9 @@ import android.util.Log;
 import edu.teco.dustradar.blebridge.KeepAliveManager;
 
 
+/**
+ * Background service that constantly acquires new GPS and network location fixes
+ */
 public class GPSService extends Service implements LocationListener {
 
     private final static String TAG = GPSService.class.getSimpleName();
@@ -46,12 +49,18 @@ public class GPSService extends Service implements LocationListener {
 
     // constructors
 
+    /**
+     * Empty constructor. Do not use it!
+     */
     public GPSService() {
     }
 
 
     // static service handlers
 
+    /**
+     * @param context Context that will start the service
+     */
     public static void startService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot start service without context or device");
@@ -67,7 +76,9 @@ public class GPSService extends Service implements LocationListener {
         context.startService(serviceIntent);
     }
 
-
+    /**
+     * @param context Context that will stop the service
+     */
     public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
@@ -77,7 +88,10 @@ public class GPSService extends Service implements LocationListener {
         context.stopService(serviceIntent);
     }
 
-
+    /**
+     * @param context Context that can call getSystemService(...)
+     * @return true when running. false otherwise
+     */
     public static boolean isRunning(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot check service without context");
@@ -142,6 +156,9 @@ public class GPSService extends Service implements LocationListener {
 
     // LocationListener implementation
 
+    /**
+     * @param location new location fix
+     */
     @Override
     public void onLocationChanged(Location location) {
         // TODO: make sophisticated location update
@@ -166,10 +183,17 @@ public class GPSService extends Service implements LocationListener {
 
     // static methods
 
+    /**
+     * @return Last known Location. Can be null if no location fix was acquired before.
+     */
     public static Location getLocation() {
         return mLocation;
     }
 
+    /**
+     * @param activity Activity that will be checked for the permission
+     * @return true when the activity has the permission. false otherwise
+     */
     public static boolean hasLocationPermission (Activity activity) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             return true;
@@ -180,6 +204,10 @@ public class GPSService extends Service implements LocationListener {
     }
 
 
+    /**
+     * @param activity Activity that tries to request the permission
+     * @param requestCode Request code that will be used in onActivityResult(...)
+     */
     @TargetApi(Build.VERSION_CODES.M)
     public static void requestLocationPermission(Activity activity, int requestCode) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -194,6 +222,10 @@ public class GPSService extends Service implements LocationListener {
     }
 
 
+    /**
+     * @param activity Activity that will be checked for the permission
+     * @return true when the activity has the permission. false otherwise
+     */
     public static boolean hasHighAccuracyPermission(Activity activity) {
         LocationManager manager = (LocationManager) activity.getSystemService(activity.LOCATION_SERVICE);
 
@@ -209,6 +241,10 @@ public class GPSService extends Service implements LocationListener {
     }
 
 
+    /**
+     * @param activity Activity that tries to request the permission
+     * @param requestCode Request code that will be used in onActivityResult(...)
+     */
     public static void requestHighAccuracyPermission(final Activity activity, final int requestCode) {
         if (hasHighAccuracyPermission(activity)) {
             return;

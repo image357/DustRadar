@@ -24,6 +24,9 @@ import edu.teco.dustradar.blebridge.KeepAliveManager;
 import edu.teco.dustradar.bluetooth.BLEService;
 
 
+/**
+ * Background service that handles measurements and metadata storage
+ */
 public class DataService extends Service {
 
     private final static String TAG = DataService.class.getSimpleName();
@@ -51,12 +54,18 @@ public class DataService extends Service {
 
     // constructors
 
+    /**
+     * Empty constructor. Do not use it!
+     */
     public DataService() {
     }
 
 
     // static service handlers
 
+    /**
+     * @param context Context that will start the service
+     */
     public static void startService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot start service without context");
@@ -72,6 +81,9 @@ public class DataService extends Service {
         context.startService(serviceIntent);
     }
 
+    /**
+     * @param context Context that will stop the service
+     */
     public static void stopService(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot stop service without context");
@@ -81,6 +93,10 @@ public class DataService extends Service {
         context.stopService(serviceIntent);
     }
 
+    /**
+     * @param context Context that can call getSystemService(...)
+     * @return true when running. false otherwise
+     */
     public static boolean isRunning(Context context) {
         if(context == null) {
             throw new Resources.NotFoundException("Cannot check service without context");
@@ -134,6 +150,9 @@ public class DataService extends Service {
 
     // static methods
 
+    /**
+     * @return Number of stored datapoints. -1 on error
+     */
     public static int size() {
         if (queueFile == null) {
             return -1;
@@ -143,6 +162,9 @@ public class DataService extends Service {
     }
 
 
+    /**
+     * @return Head of the data queue. Will not be removed. Can be null.
+     */
     public static DataObject peek() {
         if (queueFile == null) {
             return null;
@@ -162,6 +184,9 @@ public class DataService extends Service {
     }
 
 
+    /**
+     * @return Head of the data queue. Will be removed. Can be null.
+     */
     public static DataObject poll() {
         if (queueFile == null) {
             return null;
@@ -182,6 +207,10 @@ public class DataService extends Service {
     }
 
 
+    /**
+     * @param object DataObject that will be added to the end of the data queue
+     * @return true on success. false otherwise
+     */
     public static boolean add(DataObject object) {
         if (queueFile == null) {
             return false;
@@ -200,6 +229,9 @@ public class DataService extends Service {
     }
 
 
+    /**
+     * Clears the data queue
+     */
     public static void clear() {
         if (queueFile == null) {
             return;
